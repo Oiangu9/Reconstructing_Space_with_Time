@@ -1,0 +1,42 @@
+DEPENANCIES
+---------
+- Git clone the crazy project
+    https://github.com/Oiangu9/Reconstructing_Space_with_Time.git
+
+- Install opencv contrib for python (enough with the cpu version)
+    pip install --upgrade pip
+    pip install opencv-contrib-python
+
+- Install droidcam the latest release
+    
+- Write in 
+    sudo nano /etc/modprobe.d/droidcam.conf
+
+    options v4l2loopback_dc width=640 height=480 video_nr=1
+
+(- Install droidcam, the old release to be able to use it with a 4.0 Android
+    https://github.com/dev47apps/droidcam/issues/91)
+    
+- Install OBS studio
+    sudo apt-get install ffmpeg
+    sudo add-apt-repository ppa:obsproject/obs-studio
+    sudo apt-get update && sudo apt-get install obs-studio
+
+- Install droidcam for OBS
+    https://www.dev47apps.com/obs/
+    
+- Install Virtual Camera module for OBS
+    https://github.com/umlaeute/v4l2loopback   
+
+- Write in 
+    sudo nano /etc/modprobe.d/v4l2loopback.conf
+    
+    options v4l2loopback devices=1 video_nr=2 card_label="OBS Virtualcam" exclusive_caps=1
+
+- Reboot for the .confs to be executed
+
+- Check that Droidcam and OBS each has its own braodcasting channel (Droidcam in /dev/video1 and OBS in /dev/video2) using:
+    v4l2-ctl --list-devices
+
+- Change to 640x280 resolution the video output
+
