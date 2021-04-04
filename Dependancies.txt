@@ -33,7 +33,7 @@ DEPENANCIES
     
     options v4l2loopback devices=1 video_nr=2 card_label="OBS Virtualcam" exclusive_caps=1
 
-- Reboot for the .confs to be executed
+- Reboot for the .confs to be executed, execute "sudo modprobe v4l2loopback"
 
 - Check that Droidcam and OBS each has its own braodcasting channel (Droidcam in /dev/video1 and OBS in /dev/video2) using:
     v4l2-ctl --list-devices
