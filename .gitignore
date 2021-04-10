@@ -3,3 +3,9 @@
 # parameters
 *.npy
 *.npz
+
+#pycache
+__pycache__
+
+# Outputs
+OUTPUTS/*
