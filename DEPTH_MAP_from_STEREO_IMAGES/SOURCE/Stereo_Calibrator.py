@@ -8,11 +8,12 @@ import logging
 
 
 class Stereo_Calibrator:
-    def __init__(self, user_defined_parameters):
+    def __init__(self, user_defined_parameters, mainThreadPlotter):
         """
         User Defined Parameter Expects a dictionary with the following keys and value types
 
         """
+        self.mainThreadPlotter = mainThreadPlotter
         self.working_directory = user_defined_parameters["working_directory"]
         self.num_photos_calibration = user_defined_parameters["num_photos_calibration"]
         self.num_photos_test = user_defined_parameters["num_photos_test"]
@@ -21,10 +22,10 @@ class Stereo_Calibrator:
         self.chess_size_x = user_defined_parameters["chess_size_x"]
         self.chess_size_y = user_defined_parameters["chess_size_y"]
         self.chess_square_side = user_defined_parameters["chess_square_side"]
-        self.corner_criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER,
+        self.corner_criteria = (cv2.TERM_CRITERIA_MAX_ITER+cv2.TERM_CRITERIA_EPS,
                      user_defined_parameters["corner_criteria_its"],
                        user_defined_parameters["corner_criteria_eps"])
-        self.camera_criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER,
+        self.camera_criteria = (cv2.TERM_CRITERIA_MAX_ITER + cv2.TERM_CRITERIA_EPS,
                      user_defined_parameters["camera_criteria_its"],
                        user_defined_parameters["camera_criteria_eps"])
         self.stereocalib_flags = self.set_flags(
@@ -48,7 +49,6 @@ class Stereo_Calibrator:
         self.alpha = user_defined_parameters["alpha"]
         self.block_size = user_defined_parameters["block_size"]
         self.min_disp = user_defined_parameters["min_disp"]
-        self.max_disp = user_defined_parameters["max_disp"]
         self.num_disp = user_defined_parameters["num_disp"]
         self.uniquenessRatio = user_defined_parameters["uniquenessRatio"]
         self.speckleWindowSize = user_defined_parameters["speckleWindowSize"]
@@ -102,6 +102,8 @@ class Stereo_Calibrator:
 
     def setCameras(self, cam_L_idx, cam_R_idx):
         logging.info("1. Setting Cameras Ready...")
+        self.CAMS=["CAM_LEFT", "CAM_RIGHT"]
+
         # The left camera image will be the final deoth map so better the good resolution one
 
         self.vidStreamL = cv2.VideoCapture(cam_L_idx)  # index of OBS - Nirie
@@ -117,28 +119,33 @@ class Stereo_Calibrator:
         self.vidStreamL.set(cv2.CAP_PROP_FRAME_WIDTH, 640)  # float
         self.vidStreamL.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)  # float
 
-        self.CAMS=["CAM_LEFT", "CAM_RIGHT"]
         return 0
 
-    def clean_directories_build_new(self):
+    def clean_directories_build_new(self, remove_old_data):
         # Build directory structure
         logging.info("2. Building Directory Structure...")
+        if remove_old_data:
+            shutil.rmtree(f"./OUTPUTS", ignore_errors=True)
+        else: # then use old data -> expects OUTPUTS laready exists
+            if not os.path.isdir("./OUTPUTS"):
+                #logging.error("\n[ERROR] If old data is to use, there should exist an ./OUTPUT directory in working directory!")
+                return 1
+        os.makedirs("./OUTPUTS", exist_ok=True)
 
-        shutil.rmtree(f"./OUTPUTS", ignore_errors=True)
-        os.mkdir("./OUTPUTS")
 
         for CAM in self.CAMS:
-            os.makedirs(f"./OUTPUTS/{CAM}/BoardViews/", exist_ok=True)
-            os.makedirs(f"./OUTPUTS/{CAM}/Calibrated_Parameters/", exist_ok=True)
-            os.makedirs(f"./OUTPUTS/{CAM}/Undistorted_Chess_Samples/", exist_ok=True)
-            os.makedirs(f"./OUTPUTS/{CAM}/Rectified_Chess_Samples/", exist_ok=True)
-            os.makedirs(f"./OUTPUTS/{CAM}/BoardViews/", exist_ok=True)
+            os.makedirs(f"./OUTPUTS/CALIBRATION/{CAM}/BoardViews/", exist_ok=True)
+            os.makedirs(f"./OUTPUTS/CALIBRATION/{CAM}/Calibrated_Parameters/", exist_ok=True)
+            os.makedirs(f"./OUTPUTS/CALIBRATION/{CAM}/Undistorted_Chess_Samples/", exist_ok=True)
+            os.makedirs(f"./OUTPUTS/CALIBRATION/{CAM}/Rectified_Chess_Samples/", exist_ok=True)
+            os.makedirs(f"./OUTPUTS/CALIBRATION/{CAM}/BoardViews/", exist_ok=True)
 
-        os.makedirs(f"./OUTPUTS/COMMON/BoardViews/", exist_ok=True)
-        os.makedirs(f"./OUTPUTS/COMMON/Calibrated_Parameters/", exist_ok=True)
-        os.makedirs(f"./OUTPUTS/COMMON/Epilines_Chess_Samples/", exist_ok=True)
-        os.makedirs(f"./OUTPUTS/COMMON/Disparities_Chess_Samples/", exist_ok=True)
-        os.makedirs(f"./OUTPUTS/COMMON/Life_Test/", exist_ok=True)
+        os.makedirs(f"./OUTPUTS/CALIBRATION/COMMON/BoardViews/", exist_ok=True)
+        os.makedirs(f"./OUTPUTS/CALIBRATION/COMMON/Calibrated_Parameters/", exist_ok=True)
+        os.makedirs(f"./OUTPUTS/CALIBRATION/COMMON/Epilines_Chess_Samples/", exist_ok=True)
+        os.makedirs(f"./OUTPUTS/CALIBRATION/COMMON/Disparities_Chess_Samples/", exist_ok=True)
+        os.makedirs(f"./OUTPUTS/CALIBRATION/COMMON/Life_Test/", exist_ok=True)
+        return 0
 
 
     def take_chess_photos_compute_points(self):
@@ -150,12 +157,12 @@ class Stereo_Calibrator:
         # (0,0,0), (1,0,0), (2,0,0) ....,(8,5,0)
         # if it was that the second point was 10 cm away, then (0,0,0), (10,0,0), (20,0,0) etc.
         # In our case the board squares have 2.4 cm each in width and height, so:
-        world_points_chess = np.zeros((self.chess_size_y*self.chess_size_x,3),
+        self.world_points_chess = np.zeros((self.chess_size_y*self.chess_size_x,3),
                                                 np.float32)*self.chess_square_side
-        world_points_chess[:,:2] = np.mgrid[0:self.chess_size_x,0:self.chess_size_y].T.reshape(-1,2) # using chess square units
+        self.world_points_chess[:,:2] = np.mgrid[0:self.chess_size_x,0:self.chess_size_y].T.reshape(-1,2) # using chess square units
 
         # Arrays to store world points and image points from all the images.
-        world_points = [] # 3d point in real world space
+        self.world_points = [] # 3d point in real world space
         self.image_points = {} # 2d points in image plane for each camera.
         self.image_points[self.CAMS[0]]=[]
         self.image_points[self.CAMS[1]]=[]
@@ -183,8 +190,8 @@ class Stereo_Calibrator:
             logging.info(f"\nLeft image: {self.widthL}x{self.heightL}x{channelsL}, Right image: {self.widthR}x{self.heightR}x{channelsR}")
 
             # Save them now
-            cv2.imwrite(f"./OUTPUTS/CAM_LEFT/BoardViews/{successful_on_both:06}.png", img_L)
-            cv2.imwrite(f"./OUTPUTS/CAM_RIGHT/BoardViews/{successful_on_both:06}.png", img_R)
+            cv2.imwrite(f"./OUTPUTS/CALIBRATION/CAM_LEFT/BoardViews/{successful_on_both:06}.png", img_L)
+            cv2.imwrite(f"./OUTPUTS/CALIBRATION/CAM_RIGHT/BoardViews/{successful_on_both:06}.png", img_R)
 
 
             found =[True, True]
@@ -192,7 +199,7 @@ class Stereo_Calibrator:
             gray=[0,0]
             for j, CAM in enumerate(self.CAMS):
                 # Read the image in numpy format
-                full_img = cv2.imread(f"./OUTPUTS/{CAM}/BoardViews/{successful_on_both:06}.png")
+                full_img = cv2.imread(f"./OUTPUTS/CALIBRATION/{CAM}/BoardViews/{successful_on_both:06}.png")
 
                 # Grayscale the image
                 gray[j] = cv2.cvtColor(full_img, cv2.COLOR_BGR2GRAY)
@@ -215,19 +222,20 @@ class Stereo_Calibrator:
                 cv2.drawChessboardCorners(img_R, (self.chess_size_x,self.chess_size_y), detected_corners_in_image[1], found[1])
 
                 joint_images = np.concatenate((img_L, img_R), axis=1)
-                cv2.imshow('Processed pair of images are ok? Press SPACE if yes', joint_images)
-                if self.allow_choosing:
-                    ok = cv2.waitKey()
-                else:
-                    ok = cv2.waitKey(self.previs_ms)
-                cv2.destroyAllWindows()
 
+
+                ok = self.mainThreadPlotter.emit(joint_images,
+                    0 if self.allow_choosing else self.previs_ms,
+                        'Processed pair of images are ok? Press SPACE if yes')
+
+
+                logging.info(f"SI QUE FUNCIONA ok={ok}")
                 if ((ok==32) or not self.allow_choosing): ################
                     logging.info(f"\nVALIDATED chess table number {successful_on_both}/{self.num_photos_calibration}!\n")
-                    cv2.imwrite(f"./OUTPUTS/COMMON/BoardViews/{successful_on_both:06}.png", joint_images)
+                    cv2.imwrite(f"./OUTPUTS/CALIBRATION/COMMON/BoardViews/{successful_on_both:06}.png", joint_images)
 
                     # Valid detection of corners, so we add them to our list for calibration
-                    world_points.append(world_points_chess)
+                    self.world_points.append(self.world_points_chess)
 
                     self.image_points[self.CAMS[0]].append(detected_corners_in_image[0])
                     self.image_points[self.CAMS[1]].append(detected_corners_in_image[1])
@@ -236,10 +244,82 @@ class Stereo_Calibrator:
                     logging.info("\nTrying AGAIN!\n")
             else:
                 logging.info("\nTrying AGAIN!\n")
-        self.different_chess_viewsR=sorted(glob.glob("./OUTPUTS/CAM_RIGHT/BoardViews/*.png"))
-        self.different_chess_viewsL=sorted(glob.glob("./OUTPUTS/CAM_LEFT/BoardViews/*.png"))
+        self.different_chess_viewsR=sorted(glob.glob("./OUTPUTS/CALIBRATION/CAM_RIGHT/BoardViews/*.png"))
+        self.different_chess_viewsL=sorted(glob.glob("./OUTPUTS/CALIBRATION/CAM_LEFT/BoardViews/*.png"))
+
+    def use_given_photos_compute_points(self):
+        # Capture at least 10 different views of the chess board - Better if 20 for example
+        # Ideally the same time instance should be captured by each of the cameras
+        logging.info("3. Ready to take photos and compute points... ##############################")
+
+        # We will try to contrast with a reference subset 9x6 of the chess board image
+        # We prepare the world coordinates of those points in the real world
+        # We can assume z=0 and only provide x,y-s if in chess board square units:
+        # (0,0,0), (1,0,0), (2,0,0) ....,(8,5,0)
+        # if it was that the second point was 10 cm away, then (0,0,0), (10,0,0), (20,0,0) etc.
+        # In our case the board squares have 2.4 cm each in width and height, so:
+        self.world_points_chess = np.zeros((self.chess_size_y*self.chess_size_x,3),
+                                                np.float32)*self.chess_square_side
+        self.world_points_chess[:,:2] = np.mgrid[0:self.chess_size_x,0:self.chess_size_y].T.reshape(-1,2) # using chess square units
+
+        # Arrays to store world points and image points from all the images.
+        self.world_points = [] # 3d point in real world space
+        self.image_points = {} # 2d points in image plane for each camera.
+        self.image_points[self.CAMS[0]]=[]
+        self.image_points[self.CAMS[1]]=[]
+        successful_on_both=1
+
+        while successful_on_both <= self.num_photos_calibration:
+            found =[True, True]
+            detected_corners_in_image=[0,0]
+            gray=[0,0]
+            full_img=[0,0]
+            for j, CAM in enumerate(self.CAMS):
+                # Read the image in numpy format
+                full_img[j] = cv2.imread(f"./OUTPUTS/CALIBRATION/{CAM}/BoardViews/{successful_on_both:06}.png")
+                # Grayscale the image
+                gray[j] = cv2.cvtColor(full_img[j], cv2.COLOR_BGR2GRAY)
+
+                # Find the chess board corners in the image-> Telling that it should look for a 9x6 subchess
+                # The detected corners will be the pixel numbers in pixel reference (9x6, 1, 2)
+                found[j], detected_corners_in_image[j] = cv2.findChessboardCorners(gray[j], (self.chess_size_x,self.chess_size_y), None)
+
+                if found[j]==True:
+                    logging.info(f"\nDetected corners {detected_corners_in_image[j].shape} on image shape {full_img[j].shape}")
+
+                    # Improve/Refine detected corner pixels
+                    cv2.cornerSubPix(gray[j], detected_corners_in_image[j], (11,11), (-1,-1), self.corner_criteria)
 
 
+            # If found, in both cam images found will be True-> add object points, image points (after refining them)
+            if found[0] == True and found[1]==True:
+                # Draw and display the corners in the image to ccheck if correctly detected -> full_img is modified!
+                cv2.drawChessboardCorners(full_img[0], (self.chess_size_x,self.chess_size_y), detected_corners_in_image[0], found[0])
+                cv2.drawChessboardCorners(full_img[1], (self.chess_size_x,self.chess_size_y), detected_corners_in_image[1], found[1])
+
+                joint_images = np.concatenate((full_img[0], full_img[1]), axis=1)
+                ok=self.mainThreadPlotter.emit(joint_images,
+                    0 if self.allow_choosing else self.previs_ms,
+                        'Processed pair of images are ok? Press SPACE if yes')
+
+                if ((ok==32) or not self.allow_choosing): ################
+                    logging.info(f"\nVALIDATED chess table number {successful_on_both}/{self.num_photos_calibration}!\n")
+                    cv2.imwrite(f"./OUTPUTS/CALIBRATION/COMMON/BoardViews/{successful_on_both:06}.png", joint_images)
+
+                    # Valid detection of corners, so we add them to our list for calibration
+                    self.world_points.append(self.world_points_chess)
+
+                    self.image_points[self.CAMS[0]].append(detected_corners_in_image[0])
+                    self.image_points[self.CAMS[1]].append(detected_corners_in_image[1])
+                    successful_on_both+=1
+                else:
+                    logging.info("\nTrying AGAIN!\n")
+            else:
+                logging.info("\nTrying AGAIN!\n")
+        self.heightL, self.widthL, channelsL  = full_img[0].shape
+        self.heightR, self.widthR, channelsR  = full_img[1].shape
+        self.different_chess_viewsR=sorted(glob.glob("./OUTPUTS/CALIBRATION/CAM_RIGHT/BoardViews/*.png"))
+        self.different_chess_viewsL=sorted(glob.glob("./OUTPUTS/CALIBRATION/CAM_LEFT/BoardViews/*.png"))
 
     def calibrate_cameras(self):
 
@@ -251,8 +331,8 @@ class Stereo_Calibrator:
         for CAM in self.CAMS:
             # We input the world points for the chess points together with the corresponding image points in each image
             ret, self.camera_matrices[CAM], self.distortion_coefficients[CAM], rot_vecs_views, \
-                    trans_vecs_views = cv2.calibrateCamera( world_points, self.image_points[CAM],
-                    gray[0].shape[::-1],  # shape tuple (nx, ny) of the images, just used to initialize the intrinsic param matrix
+                    trans_vecs_views = cv2.calibrateCamera( self.world_points, self.image_points[CAM],
+                    (self.widthL, self.heightL),  # shape tuple (nx, ny) of the images, just used to initialize the intrinsic param matrix
                     None,None, criteria=self.camera_criteria)
             # camera_matrix is the affine reference change from the projected to the pixel frame.
             # it contains focal distances fx, fy and translation from the center of projection c1,c2 to the origin of pixels
@@ -264,16 +344,16 @@ class Stereo_Calibrator:
 
             # We save the camera matrices and the distortion coefficents
 
-            np.save(f"./OUTPUTS/{CAM}/Calibrated_Parameters/Camera_Matrix_Cam_to_Pixel_{CAM}.npy", self.camera_matrices[CAM])
-            np.save(f"./OUTPUTS/{CAM}/Calibrated_Parameters/Distortion_Parameters_{CAM}.npy", self.distortion_coefficients[CAM])
+            np.save(f"./OUTPUTS/CALIBRATION/{CAM}/Calibrated_Parameters/Camera_Matrix_Cam_to_Pixel_{CAM}.npy", self.camera_matrices[CAM])
+            np.save(f"./OUTPUTS/CALIBRATION/{CAM}/Calibrated_Parameters/Distortion_Parameters_{CAM}.npy", self.distortion_coefficients[CAM])
 
             # We compute the error if we re-projected it all with the found parameters
             mean_error = 0
-            for i in range(len(world_points)):
-                aprox_image_Points, _ = cv2.projectPoints(world_points[i], rot_vecs_views[i], trans_vecs_views[i], self.camera_matrices[CAM], self.distortion_coefficients[CAM])
+            for i in range(len(self.world_points)):
+                aprox_image_Points, _ = cv2.projectPoints(self.world_points[i], rot_vecs_views[i], trans_vecs_views[i], self.camera_matrices[CAM], self.distortion_coefficients[CAM])
                 error = cv2.norm(self.image_points[CAM][i], aprox_image_Points, cv2.NORM_L2)/len(aprox_image_Points)
                 mean_error += error
-            logging.info( f"\n{CAM} CALIBRATED!\nMSE for reprojection given distortion correction in {CAM}: {mean_error/len(world_points)}" )
+            logging.info( f"\n{CAM} CALIBRATED!\nMSE for reprojection given distortion correction in {CAM}: {mean_error/len(self.world_points)}" )
 
     def compute_Fundamental_Matrix(self):
 
@@ -284,7 +364,7 @@ class Stereo_Calibrator:
         rms, self.camera_matrices["CAM_LEFT"],  self.distortion_coefficients["CAM_LEFT"], \
         self.camera_matrices["CAM_RIGHT"],  self.distortion_coefficients["CAM_RIGHT"], \
         self.R, self.T, E, self.F = cv2.stereoCalibrate(
-            world_points, self.image_points['CAM_LEFT'], self.image_points['CAM_RIGHT'],
+            self.world_points, self.image_points['CAM_LEFT'], self.image_points['CAM_RIGHT'],
             self.camera_matrices["CAM_LEFT"], self.distortion_coefficients["CAM_LEFT"],
             self.camera_matrices["CAM_RIGHT"], self.distortion_coefficients["CAM_RIGHT"],
             (self.widthL, self.heightL), criteria = self.stereocalib_criteria, flags = self.stereocalib_flags)
@@ -294,12 +374,12 @@ class Stereo_Calibrator:
         else:
             logging.info(f"[OK] Fundamental Matrix onbtention successful RMS error= {rms}")
 
-        np.savez("./OUTPUTS/COMMON/Calibrated_Parameters/Stereo_Calibrate_rms_KL_DL_KR_DR_R_T_E_F.npz",\
+        np.savez("./OUTPUTS/CALIBRATION/COMMON/Calibrated_Parameters/Stereo_Calibrate_rms_KL_DL_KR_DR_R_T_E_F.npz",\
                  rms=rms, KL=self.camera_matrices["CAM_LEFT"],  DL=self.distortion_coefficients["CAM_LEFT"], \
                  KR=self.camera_matrices["CAM_RIGHT"],  DR=self.distortion_coefficients["CAM_RIGHT"], \
                  R=self.R, T=self.T, E=E, F=self.F)
 
-    def _drawlines(img1src, img2src, lines, pts1src, pts2src):
+    def _drawlines(self, img1src, img2src, lines, pts1src, pts2src):
         ''' img1 - grayscale image on which we draw the epilines for the points in img2 given by pts2src
             lines - corresponding epilines '''
         r, c = img1src.shape
@@ -319,7 +399,9 @@ class Stereo_Calibrator:
     def draw_Epilines(self):
         # DRAW SOME EPILINES ON THE CHESS BOARDS FOR FUN using the Fundamental Matrix ##########
         logging.info(f"\n6. DRAWING EPILINES FOR SANITY CHECK ################################\n")
-        for i, (file_nameL, file_nameR) in enumerate(zip(self.different_chess_viewsL, self.widthR)):
+        for i, (file_nameL, file_nameR) in enumerate(zip(self.different_chess_viewsL, self.different_chess_viewsR)):
+            if i==5:
+                break
             full_imageL = cv2.imread(file_nameL, cv2.IMREAD_GRAYSCALE)
             full_imageR = cv2.imread(file_nameR, cv2.IMREAD_GRAYSCALE)
             logging.info(i)
@@ -340,7 +422,7 @@ class Stereo_Calibrator:
             plt.subplot(121), plt.imshow(img5)
             plt.subplot(122), plt.imshow(img3)
             plt.suptitle("Epilines in both images")
-            plt.savefig(f"./OUTPUTS/COMMON/Epilines_Chess_Samples/Epilines_{(i+1):06}.png", dpi=400)
+            plt.savefig(f"./OUTPUTS/CALIBRATION/COMMON/Epilines_Chess_Samples/Epilines_{(i+1):06}.png", dpi=400)
             plt.clf()
     def compute_Stereo_Rectification(self):
         # OBTAIN STERO RECTIFICATION HOMOGRAPHIES #####################################
@@ -357,14 +439,14 @@ class Stereo_Calibrator:
         validPixROI1	Optional output rectangles inside the rectified images where all the pixels are valid. If alpha=0 , the ROIs cover the whole images. Otherwise, they are likely to be smaller (see the picture below).
         validPixROI2	Optional output rectangles inside the rectified images where all the pixels are valid. If alpha=0 , the ROIs cover the whole images. Otherwise, they are likely to be smaller (see the picture below).
         '''
-        self.R1, self.R2, self.P1, self.P2, self.Q, roi_left, roi_right = cv2.stereoRectify(
+        self.R1, self.R2, self.P1, self.P2, self.Q, self.roi_left, self.roi_right = cv2.stereoRectify(
                 self.camera_matrices["CAM_LEFT"],  self.distortion_coefficients["CAM_LEFT"], \
                 self.camera_matrices["CAM_RIGHT"],  self.distortion_coefficients["CAM_RIGHT"],\
                 (self.widthL, self.heightL), self.R, self.T,\
-                flags=cv2.CALIB_ZERO_DISPARITY*self.flag_CALIB_ZERO_DISPARITY , alpha=0.9)
+                flags=cv2.CALIB_ZERO_DISPARITY*self.flag_CALIB_ZERO_DISPARITY , alpha=self.alpha)
 
-        np.savez("./OUTPUTS/COMMON/Calibrated_Parameters/Stereo_Rectify_R1_R2_P1_P2_Q_roi_left_roi_right.npz",
-                     R1=self.R1, R2=self.R2, P1=self.P1, P2=self.P2, Q=self.Q, roi_left=roi_left, roi_right=roi_right)
+        np.savez("./OUTPUTS/CALIBRATION/COMMON/Calibrated_Parameters/Stereo_Rectify_R1_R2_P1_P2_Q_roi_left_roi_right.npz",
+                     R1=self.R1, R2=self.R2, P1=self.P1, P2=self.P2, Q=self.Q, roi_left=self.roi_left, roi_right=self.roi_right)
 
     def rectify_chess(self):
         # DO THE UNDISTORTION BETTER WITH ALL THIS #####################################
@@ -375,26 +457,32 @@ class Stereo_Calibrator:
         fig, axes = plt.subplots(1, 2, figsize=(15, 10))
         fig.suptitle("Rectified images should have epilines aligned")
 
-        mapLx, mapLy	=	cv2.initUndistortRectifyMap( self.camera_matrices["CAM_LEFT"],
+        self.mapLx, self.mapLy	=	cv2.initUndistortRectifyMap( self.camera_matrices["CAM_LEFT"],
                         self.distortion_coefficients["CAM_LEFT"], self.R1, self.P1, (self.widthL, self.heightL), cv2.CV_32FC1)
 
-        mapRx, mapRy	=	cv2.initUndistortRectifyMap( self.camera_matrices["CAM_RIGHT"],
+        self.mapRx, self.mapRy	=	cv2.initUndistortRectifyMap( self.camera_matrices["CAM_RIGHT"],
                         self.distortion_coefficients["CAM_RIGHT"], self.R2, self.P2, (self.widthR, self.heightR), cv2.CV_32FC1)
 
-        for i, (file_nameL, file_nameR) in enumerate(zip(self.different_chess_viewsL, self.widthR)):
-            print(i)
+        for i, (file_nameL, file_nameR) in enumerate(zip(self.different_chess_viewsL, self.different_chess_viewsR)):
+            if i==5:
+                break
+            logging.info(i)
             img_L = cv2.imread(file_nameL)
             img_R = cv2.imread(file_nameR)
 
-            rectified_imageL = cv2.remap(img_L, mapLx, mapLy, cv2.INTER_LANCZOS4, cv2.BORDER_CONSTANT)
-            rectified_imageR = cv2.remap(img_R, mapRx, mapRy, cv2.INTER_LANCZOS4, cv2.BORDER_CONSTANT)
+            rectified_imageL = cv2.remap(img_L, self.mapLx, self.mapLy, cv2.INTER_LANCZOS4, cv2.BORDER_CONSTANT)
+            rectified_imageR = cv2.remap(img_R, self.mapRx, self.mapRy, cv2.INTER_LANCZOS4, cv2.BORDER_CONSTANT)
 
-            cv2.imwrite(f'./OUTPUTS/CAM_LEFT/Rectified_Chess_Samples/Rectified_{(i+1):06}.png', rectified_imageL)
-            cv2.imwrite(f'./OUTPUTS/CAM_RIGHT/Rectified_Chess_Samples/Rectified_{(i+1):06}.png', rectified_imageR)
+            cv2.imwrite(f'./OUTPUTS/CALIBRATION/CAM_LEFT/Rectified_Chess_Samples/Rectified_{(i+1):06}.png', rectified_imageL)
+            cv2.imwrite(f'./OUTPUTS/CALIBRATION/CAM_RIGHT/Rectified_Chess_Samples/Rectified_{(i+1):06}.png', rectified_imageR)
 
             # For sanity check we will plot the rectified images with some horizontal lines which should match the epilines of both images
             rectified_imageL=cv2.cvtColor(rectified_imageL, cv2.COLOR_BGR2GRAY)
             rectified_imageR=cv2.cvtColor(rectified_imageR, cv2.COLOR_BGR2GRAY)
+            #x, y, w, h = self.roi_left
+            #rectified_imageL = rectified_imageL[ x:x+w, y:y+h]
+            #x, y, w, h = self.roi_right
+            #rectified_imageR = rectified_imageR[y:y+h, x:x+w]
             axes[0].imshow(rectified_imageL, cmap='gray')
             axes[1].imshow(rectified_imageR, cmap='gray')
 
@@ -402,7 +490,7 @@ class Stereo_Calibrator:
                 axes[0].axhline(j)
                 axes[1].axhline(j)
 
-            fig.savefig(f"./OUTPUTS/COMMON/Epilines_Chess_Samples/Rectified_Epilines_{(i+1):06}.png", dpi=400)
+            fig.savefig(f"./OUTPUTS/CALIBRATION/COMMON/Epilines_Chess_Samples/Rectified_Epilines_{(i+1):06}.png", dpi=400)
 
             axes[0].clear()
             axes[1].clear()
@@ -411,7 +499,7 @@ class Stereo_Calibrator:
 
         # OBTAIN THE DISPARITY MAP AND THE DEPTH MAP! ###################################
         logging.info(f"\n\n9. OBTAINING STERO DISPARITY AND DEPTH MAPS FOR CHESS VIEWS!!#####\n")
-
+        '''
         # StereoSGBM Parameter explanations:
         # https://docs.opencv.org/4.5.0/d2/d85/classcv_1_1StereoSGBM.html
 
@@ -433,17 +521,18 @@ class Stereo_Calibrator:
         # Normally, 1 or 2 is good enough.
         speckleRange = 2
         disp12MaxDiff = 0
-
+        '''
+        #self.square = cv2.GetValidDisparityROI(self.roi_left, self.roi_right, self.min_disp, self.num_disp)
         self.stereo_left_matcher = cv2.StereoSGBM_create(
-            minDisparity=min_disp,
-            numDisparities=num_disp,
-            blockSize=block_size,
-            uniquenessRatio=uniquenessRatio,
-            speckleWindowSize=speckleWindowSize,
-            speckleRange=speckleRange,
-            disp12MaxDiff=disp12MaxDiff,
-            P1=8 * 1 * block_size * block_size,
-            P2=32 * 1 * block_size * block_size,
+            minDisparity=self.min_disp,
+            numDisparities=self.num_disp,
+            blockSize=self.block_size,
+            uniquenessRatio=self.uniquenessRatio,
+            speckleWindowSize=self.speckleWindowSize,
+            speckleRange=self.speckleRange,
+            disp12MaxDiff=self.disp12MaxDiff,
+            P1=8 * 1 * self.block_size * self.block_size,
+            P2=32 * 1 * self.block_size * self.block_size,
         )
 
         # We will not simply use the stereoSGBM but also a  disparity map post-filtering
@@ -454,23 +543,24 @@ class Stereo_Calibrator:
         # https://docs.opencv.org/master/d3/d14/tutorial_ximgproc_disparity_filtering.html
 
         self.stereo_right_matcher = cv2.ximgproc.createRightMatcher(self.stereo_left_matcher)
+        '''
         # FILTER Parameters
         lmbda = 80000
         sigma = 1.3
         visual_multiplier = 6
-
+        '''
         self.wls_filter = cv2.ximgproc.createDisparityWLSFilter(matcher_left=self.stereo_left_matcher)
-        self.wls_filter.setLambda(lmbda)
-        self.wls_filter.setSigmaColor(sigma)
+        self.wls_filter.setLambda(self.lmbda)
+        self.wls_filter.setSigmaColor(self.sigma)
 
 
-        different_chess_views_rectified_R=sorted(glob.glob("./OUTPUTS/CAM_RIGHT/Rectified_Chess_Samples/*.png"))
-        different_chess_views_rectified_L=sorted(glob.glob("./OUTPUTS/CAM_LEFT/Rectified_Chess_Samples/*.png"))
+        different_chess_views_rectified_R=sorted(glob.glob("./OUTPUTS/CALIBRATION/CAM_RIGHT/Rectified_Chess_Samples/*.png"))
+        different_chess_views_rectified_L=sorted(glob.glob("./OUTPUTS/CALIBRATION/CAM_LEFT/Rectified_Chess_Samples/*.png"))
         def normalize_and_plot_disparity_map(disparity, tag, i):
             disparity_plot = cv2.normalize(disparity, disparity, alpha=255,
                                           beta=0, norm_type=cv2.NORM_MINMAX)
             disparity_plot = np.uint8(disparity_plot)
-            cv2.imwrite(f"./OUTPUTS/COMMON/Disparities_Chess_Samples/Normalized_{tag}_disparity_{(i+1):06}.png", disparity_plot)
+            cv2.imwrite(f"./OUTPUTS/CALIBRATION/COMMON/Disparities_Chess_Samples/Normalized_{tag}_disparity_{(i+1):06}.png", disparity_plot)
 
         for i, (file_nameL, file_nameR) in enumerate(zip(different_chess_views_rectified_L, different_chess_views_rectified_R)):
             rectified_imageL = cv2.imread(file_nameL)
@@ -516,49 +606,51 @@ class Stereo_Calibrator:
         # Kriston erreferentzixe!
         # https://www.programcreek.com/python/?code=aliyasineser%2FstereoDepth%2FstereoDepth-master%2Fstereo_depth.py#
 
-        def do_Test(self):
-            logging.info(f"\n\n10. Taking photos for life test...#############")
-            # NOW WE WILL RECORD A TEST FILM TO CHECK THE CORRECTNESS OF THE MAPS
+    def do_Test(self, use_taken_photos_test):
+        logging.info(f"\n\n10. Taking photos for life test...#############")
+        # NOW WE WILL RECORD A TEST FILM TO CHECK THE CORRECTNESS OF THE MAPS
 
-            def normalize_disparity_map(disparity):
-                disparity = cv2.normalize(disparity, disparity, alpha=255,
-                                              beta=0, norm_type=cv2.NORM_MINMAX)
-                return np.uint8(disparity)
+        def normalize_disparity_map(disparity):
+            disparity = cv2.normalize(disparity, disparity, alpha=255,
+                                          beta=0, norm_type=cv2.NORM_MINMAX)
+            return np.uint8(disparity)
 
-            for j in range(self.num_photos_test):
-                logging.info(f"\n\nTAKING PHOTOS {j}/{self.num_photos_test} ########################")
-                # instead of using .read() to get an image we decompose it into .grab and then .retrieve
-                # so we can maximize the sinchronization
-
+        for j in range(self.num_photos_test):
+            logging.info(f"\n\nTAKING PHOTOS {j}/{self.num_photos_test} ########################")
+            # instead of using .read() to get an image we decompose it into .grab and then .retrieve
+            # so we can maximize the sinchronization
+            if not use_taken_photos_test:
                 if not (self.vidStreamR.grab() and self.vidStreamL.grab()):
                     logging.warning("[Error] Getting the image for this iteration. Retrying...")
                     continue
                 _, img_R = self.vidStreamR.retrieve()
                 _, img_L = self.vidStreamL.retrieve()
+                cv2.imwrite(f"./OUTPUTS/CALIBRATION/COMMON/Life_Test/Life_L_{j}.png", img_L)
+                cv2.imwrite(f"./OUTPUTS/CALIBRATION/COMMON/Life_Test/Life_R_{j}.png", img_R)
+            else:
+                img_L = cv2.imread(f"./OUTPUTS/CALIBRATION/COMMON/Life_Test/Life_L_{j}.png")
+                img_R = cv2.imread(f"./OUTPUTS/CALIBRATION/COMMON/Life_Test/Life_R_{j}.png")
 
+            # RECTIFY THE IMAGE
+            rect_img_L = cv2.remap(img_L, self.mapLx, self.mapLy, cv2.INTER_LANCZOS4, cv2.BORDER_CONSTANT)
+            rect_img_R = cv2.remap(img_R, self.mapRx, self.mapRy, cv2.INTER_LANCZOS4, cv2.BORDER_CONSTANT)
+            result = np.concatenate((rect_img_L,rect_img_R), axis=1)
+            cv2.imwrite(f"./OUTPUTS/CALIBRATION/COMMON/Life_Test/Life_{j}_color.png", result)
 
-                # RECTIFY THE IMAGE
-                rect_img_L = cv2.remap(img_L, mapLx, mapLy, cv2.INTER_LANCZOS4, cv2.BORDER_CONSTANT)
-                rect_img_R = cv2.remap(img_R, mapRx, mapRy, cv2.INTER_LANCZOS4, cv2.BORDER_CONSTANT)
-                result = np.concatenate((rect_img_L,rect_img_R), axis=1)
-                cv2.imwrite(f"./OUTPUTS/COMMON/Life_Test/Life_{j}_color.png", result)
+            # GRAYSCALE THE IMAGES
+            grayL = cv2.cvtColor(rect_img_L, cv2.COLOR_BGR2GRAY)
+            grayR = cv2.cvtColor(rect_img_R, cv2.COLOR_BGR2GRAY)
 
-                # GRAYSCALE THE IMAGES
-                grayL = cv2.cvtColor(rect_img_L, cv2.COLOR_BGR2GRAY)
-                grayR = cv2.cvtColor(rect_img_R, cv2.COLOR_BGR2GRAY)
+            # COMPUTE DISPARITIES
 
-                # COMPUTE DISPARITIES
+            disparity_L = self.stereo_left_matcher.compute(grayL, grayR)  # .astype(np.float32)/16
+            disparity_R = self.stereo_right_matcher.compute(grayR, grayL)  # .astype(np.float32)/16
+            disparity_L = np.int16(disparity_L)
+            disparity_R = np.int16(disparity_R)
+            filtered_disparity = self.wls_filter.filter(disparity_L, grayL, None, disparity_R)  # important to put "imgL" here!!! Maybe can use the colored image here!
 
-                disparity_L = self.stereo_left_matcher.compute(grayL, grayR)  # .astype(np.float32)/16
-                disparity_R = self.stereo_right_matcher.compute(grayR, grayL)  # .astype(np.float32)/16
-                disparity_L = np.int16(disparity_L)
-                disparity_R = np.int16(disparity_R)
-                filtered_disparity = self.wls_filter.filter(disparity_L, grayL, None, disparity_R)  # important to put "imgL" here!!! Maybe can use the colored image here!
-
-                total_unfiltered = np.concatenate((normalize_disparity_map(disparity_L), normalize_disparity_map(disparity_R)), axis=1)
-                total_filtered = np.concatenate( (normalize_disparity_map(filtered_disparity), np.zeros(filtered_disparity.shape)), axis=1 )
-                joint_images = np.concatenate((total_unfiltered, total_filtered), axis=0)
-                cv2.imwrite(f"./OUTPUTS/COMMON/Life_Test/Life_{j}.png", joint_images)
-                cv2.imshow(f'Life Test {j}', result)
-                ok = cv2.waitKey(2000) #########
-                cv2.destroyAllWindows()
+            total_unfiltered = np.concatenate((normalize_disparity_map(disparity_L), normalize_disparity_map(disparity_R)), axis=1)
+            total_filtered = np.concatenate( (normalize_disparity_map(filtered_disparity), np.zeros(filtered_disparity.shape)), axis=1 )
+            joint_images = np.concatenate((total_unfiltered, total_filtered), axis=0)
+            cv2.imwrite(f"./OUTPUTS/CALIBRATION/COMMON/Life_Test/Life_{j}.png", joint_images)
+            self.mainThreadPlotter.emit(result, 2000, f'Life Test {j}')
