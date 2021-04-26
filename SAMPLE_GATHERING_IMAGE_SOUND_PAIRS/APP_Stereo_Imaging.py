@@ -1,19 +1,37 @@
 from GUI.Design_ui import *
 from SOURCE.Stereo_Calibrator import Stereo_Calibrator
 from SOURCE.Depth_Mapper import Depth_Mapper
-from SOURCE.Sound_Echo_and_Depth_Mapper import Sound_Echo_and_Depth_Mapper
 import os
 import sys
 import numpy as np
 import cv2
-import logging
-import glob
-import matplotlib as plt
-
 # pyuic5 -x Design.ui -o Design_ui.py
 # sudo modprobe v4l2loopback
 # v4l2-ctl --list-devices
 
+"""
+TODOS
+----
+
+- Probeu badoan
+- Arregleu ia kamarien psoiziñoa zan problemie
+- Gehitu opzxiñoa depth mapak eitzeko en general (quiza con disparity ya baste)
+- Lortu ez arren perfektoa dale audioa kontroleteie ordenadoretik eta record-sound-record-sound eitzie pythonetik ia al badozun.
+- Ikusi ia ondo printietako gai zaren matplotlibegaz edo opencvgaz edo ia zer, Todorrenerako be ondo etorko da eta
+
+Proyektu Todor
+-----------
+- Plantieu GUIxe, timer bat etabar erakustie
+- Ein funkiñoa i607
+- Implementeu rotaziñoan bersiño lehena
+- Histogramien bersiño lehena
+- Roitaziñoa stokatsiko
+- Histogramiena azalerakaz
+- Saiatu betie eitzen fletxitana
+
+"""
+
+import logging
 
 
 """
@@ -101,8 +119,6 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         # We connect the events with their actions
         self.start_calibration.clicked.connect(self.executeCalibration)
         self.start_take.clicked.connect(self.executeLifeTake)
-        self.run_echo_depth.clicked.connect(self.executeEchoDepthTake)
-        self.run_selection_echo_depth.clicked.connect(self.selectEchoDepth)
 
         # when user clicks to choose differnt paths
         self.change_stereo_calib_path.clicked.connect(lambda:
@@ -113,23 +129,12 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                     self.choose_file("Choose StereoRectify parameter file",
                         "Stereo_Rectify_R1_R2_P1_P2_Q_roi_left_roi_right.npz",
                         "Numpy array container (*.npz)", self.stereo_rectify_param_path))
-        self.change_stereo_calib_path_echo_depth.clicked.connect(lambda:
-                    self.choose_file("Choose StereoCalib parameter file",
-                        "Stereo_Calibrate_rms_KL_DL_KR_DR_R_T_E_F.npz",
-                        "Numpy array container (*.npz)", self.stereo_calibrate_param_path))
-        self.change_stereo_rectify_path_echo_depth.clicked.connect(lambda:
-                    self.choose_file("Choose StereoRectify parameter file",
-                        "Stereo_Rectify_R1_R2_P1_P2_Q_roi_left_roi_right.npz",
-                        "Numpy array container (*.npz)", self.stereo_rectify_param_path))
         self.change_working_directory.clicked.connect(lambda:
                     self.choose_directory("Choose Working Directory", self.working_directory))
 
         # Set default seterocalibration and recification parameter file paths
         self.stereo_calibrate_param_path.setText( "./OUTPUTS/CALIBRATION/COMMON/Calibrated_Parameters/Stereo_Calibrate_rms_KL_DL_KR_DR_R_T_E_F.npz" )
         self.stereo_rectify_param_path.setText( "./OUTPUTS/CALIBRATION/COMMON/Calibrated_Parameters/Stereo_Rectify_R1_R2_P1_P2_Q_roi_left_roi_right.npz" )
-        self.stereo_calibrate_param_path_echo_depth.setText( "./OUTPUTS/CALIBRATION/COMMON/Calibrated_Parameters/Stereo_Calibrate_rms_KL_DL_KR_DR_R_T_E_F.npz" )
-        self.stereo_rectify_param_path_echo_depth.setText( "./OUTPUTS/CALIBRATION/COMMON/Calibrated_Parameters/Stereo_Rectify_R1_R2_P1_P2_Q_roi_left_roi_right.npz" )
-        self.echo_depth_output_path.setText("./OUTPUTS")
 
         # create the workers for the methods
         self.calibrator_worker = Worker( self._executeCalibration_Pipeline, ())
@@ -138,9 +143,6 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.life_take_worker = Worker( self._executeLifeTake_Pipeline, ())
         self.life_take_worker.finished.connect(lambda: self.setUserInteraction(True))
         #self.calibrator_worker.terminated.connect(lambda: self.setUserInteraction(True))
-
-        self.echo_depth_worker = Worker( self._executeEchoDepthTake_Pipeline, ())
-        self.echo_depth_worker.finished.connect(lambda: self.setUserInteraction(True))
 
     def show_cv2_image(self, image_array, t, label):
         cv2.imshow(label, image_array)
@@ -173,8 +175,6 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
     def setUserInteraction(self, state):
         self.start_take.setEnabled(state)
         self.start_calibration.setEnabled(state)
-        self.run_echo_depth.setEnabled(state)
-        self.run_selection_echo_depth.setEnabled(state)
 
 
     def executeCalibration(self):
@@ -239,7 +239,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         os.chdir(user_defined_parameters["working_directory"])
         self.barUpdate_Calibrate.emit(1)
 
-        if True: # only then need for cameras
+        if not (self.use_taken_photos and self.use_taken_photos_test): # only then need for cameras
             ret = stereo_Calibrator.setCameras(int(self.cam_L_idx.value()),
                                                 int(self.cam_R_idx.value())) #%5
             if (ret==1):
@@ -320,7 +320,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         # We execute all the pipeline, notifying the user in between
         os.chdir(user_defined_parameters["working_directory"])
         self.barUpdate_Life.emit(1)
-        if not self.use_taken_photos_life.isChecked(): # only then it is necesary a camera
+        if not self.use_taken_photos_life: # only then it is necesary a camera
             ret = depth_mapper.setCameras(int(self.cam_L_idx.value()),
                                                 int(self.cam_R_idx.value())) #%5
             if (ret==1):
@@ -341,71 +341,6 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.barUpdate_Life.emit(100)
 
 
-    def executeEchoDepthTake(self):
-        self.setUserInteraction(False)
-
-        user_defined_parameters={}
-        user_defined_parameters["working_directory"] = self.working_directory.text()
-        user_defined_parameters["stereo_calibrate_param_path_echo_depth"] = self.stereo_calibrate_param_path_echo_depth.text()
-        user_defined_parameters["stereo_rectify_param_path_echo_depth"] = self.stereo_rectify_param_path_echo_depth.text()
-
-        user_defined_parameters["sample_num_echo_depth"]=int(self.sample_num_echo_depth.text())
-        user_defined_parameters["time_between_shots"]=float(self.time_between_shots.text())
-        user_defined_parameters["echo_depth_output_path"]=self.echo_depth_output_path.text()
-        user_defined_parameters["frequency"]=float(self.frequency.text())
-        user_defined_parameters["pulse_duration"]=float(self.pulse_duration.text())
-        user_defined_parameters["broadcast_sample_rate"]=int(self.broadcast_sample_rate.text())
-        user_defined_parameters["envelope_std"]=float(self.envelope_std.text())
-        user_defined_parameters["gaussian_envelope"]=self.gaussian_envelope.isChecked()
-        user_defined_parameters["recording_sample_rate"]=int(self.recording_sample_rate.text())
-        user_defined_parameters["recording_duration"]=float(self.recording_duration.text())
-        user_defined_parameters["use_average_image"]=self.use_average_image.isChecked()
-        user_defined_parameters["delay_broadcast_recording"]=float(self.delay_broadcast_recording.text())
-
-        user_defined_parameters["block_size"]= int(self.block_size.text())
-        user_defined_parameters["min_disp"]= int(self.min_disp.text())
-        user_defined_parameters["num_disp"]= int(self.num_disp.text())
-        user_defined_parameters["uniquenessRatio"]= int(self.uniquenessRatio.text())
-        user_defined_parameters["speckleWindowSize"]= int(self.speckleWindowSize.text())
-        user_defined_parameters["disp12MaxDiff"]= int(self.disp12MaxDiff.text())
-        user_defined_parameters["speckleRange"]= int(self.speckleRange.text())
-        user_defined_parameters["lmbda"]= int(self.lmbda.text())
-        user_defined_parameters["sigma"]= float(self.sigma.text())
-        user_defined_parameters["visual_multiplier"]= int(self.visual_multiplier.text())
-
-        self.echo_depth_worker.args=(user_defined_parameters,)
-        self.echo_depth_worker.start()
-
-
-    def _executeEchoDepthTake_Pipeline(self, user_defined_parameters):
-        depth_mapper = Sound_Echo_and_Depth_Mapper(user_defined_parameters, self.plotter_cv2)
-
-        # We execute all the pipeline, notifying the user in between
-        os.chdir(user_defined_parameters["working_directory"])
-        self.barUpdate_Life.emit(1)
-        ret = depth_mapper.setCameras(int(self.cam_L_idx.value()),
-                                            int(self.cam_R_idx.value())) #%5
-        if (ret==1):
-            logging.error("\nTry readjusting cameras and Start Calibration Again!")
-            self.barUpdate_Life.emit(0)
-            #return 1
-
-        self.barUpdate_Life.emit(10)
-
-        ret = depth_mapper.clean_directories_build_new(self.erase_old_data_echo_depth.isChecked())
-
-        if ret==1:
-            logging.error("\n[ERROR] If old data is to use, there should exist an ./OUTPUT directory in working directory!")
-            self.barUpdate_Life.emit(0)
-            return 1
-        self.barUpdate_Life.emit(15)
-
-        depth_mapper.take_samples()
-        self.barUpdate_Life.emit(100)
-
-    def selectEchoDepth(self):
-        self.depthMaps=sorted(glob.glob(f"{self.echo_depth_output_path}/SOUND_ECHO_and_DEPTH/DEPTH_MAPS/FILTERED_DEPTH_MAPS/*.png"))
-        self.audios=sorted(glob.glob(f"{self.echo_depth_output_path}/SOUND_ECHO_and_DEPTH/SOUND_RECORDINGS/*.wav"))
 
 
 if __name__ == "__main__":

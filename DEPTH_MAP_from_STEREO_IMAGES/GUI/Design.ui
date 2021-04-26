@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1205</width>
+    <width>1195</width>
     <height>926</height>
    </rect>
   </property>
@@ -19,12 +19,12 @@
      <rect>
       <x>9</x>
       <y>9</y>
-      <width>1187</width>
-      <height>651</height>
+      <width>1181</width>
+      <height>630</height>
      </rect>
     </property>
     <property name="currentIndex">
-     <number>1</number>
+     <number>2</number>
     </property>
     <widget class="QWidget" name="Calibrate_System">
      <attribute name="title">
@@ -1037,15 +1037,515 @@ be divsble by 16)</string>
       <property name="geometry">
        <rect>
         <x>120</x>
-        <y>560</y>
+        <y>540</y>
         <width>761</width>
         <height>31</height>
        </rect>
       </property>
       <property name="text">
-       <string>Remember to choose the Disparity SGMB paramteres and cameras in the other Tab!</string>
+       <string>Remember to choose the Disparity SGMB paramteres and cameras in the first Tab!</string>
       </property>
      </widget>
+    </widget>
+    <widget class="QWidget" name="tab_5">
+     <attribute name="title">
+      <string>Gather Sound Echo and Depth Maps</string>
+     </attribute>
+     <layout class="QGridLayout" name="gridLayout">
+      <item row="0" column="1" rowspan="2">
+       <widget class="QGroupBox" name="groupBox_4">
+        <property name="title">
+         <string>General Settings</string>
+        </property>
+        <widget class="QLabel" name="label_42">
+         <property name="geometry">
+          <rect>
+           <x>20</x>
+           <y>50</y>
+           <width>161</width>
+           <height>31</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>Output Directory</string>
+         </property>
+        </widget>
+        <widget class="QPushButton" name="change_output_directory_echo_depth">
+         <property name="geometry">
+          <rect>
+           <x>460</x>
+           <y>50</y>
+           <width>101</width>
+           <height>34</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>Change</string>
+         </property>
+        </widget>
+        <widget class="QLineEdit" name="echo_depth_output_path">
+         <property name="geometry">
+          <rect>
+           <x>230</x>
+           <y>50</y>
+           <width>221</width>
+           <height>34</height>
+          </rect>
+         </property>
+        </widget>
+        <widget class="QLabel" name="label_43">
+         <property name="geometry">
+          <rect>
+           <x>20</x>
+           <y>110</y>
+           <width>181</width>
+           <height>51</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>Number of samples
+to take:</string>
+         </property>
+        </widget>
+        <widget class="QLineEdit" name="sample_num_echo_depth">
+         <property name="geometry">
+          <rect>
+           <x>230</x>
+           <y>110</y>
+           <width>221</width>
+           <height>34</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>100</string>
+         </property>
+        </widget>
+        <widget class="QRadioButton" name="erase_old_data_echo_depth">
+         <property name="geometry">
+          <rect>
+           <x>30</x>
+           <y>230</y>
+           <width>161</width>
+           <height>32</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>Erase Old Data</string>
+         </property>
+        </widget>
+        <widget class="QLineEdit" name="time_between_shots">
+         <property name="geometry">
+          <rect>
+           <x>240</x>
+           <y>190</y>
+           <width>211</width>
+           <height>34</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>2</string>
+         </property>
+        </widget>
+        <widget class="QLabel" name="label_46">
+         <property name="geometry">
+          <rect>
+           <x>20</x>
+           <y>180</y>
+           <width>201</width>
+           <height>51</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>Time between shots (s):</string>
+         </property>
+        </widget>
+        <widget class="QPushButton" name="run_echo_depth">
+         <property name="geometry">
+          <rect>
+           <x>60</x>
+           <y>300</y>
+           <width>171</width>
+           <height>51</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>RUN GATHERING</string>
+         </property>
+        </widget>
+        <widget class="QPushButton" name="run_selection_echo_depth">
+         <property name="geometry">
+          <rect>
+           <x>290</x>
+           <y>300</y>
+           <width>241</width>
+           <height>51</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>Choose the samples
+in directory To Erase</string>
+         </property>
+        </widget>
+       </widget>
+      </item>
+      <item row="1" column="0">
+       <widget class="QGroupBox" name="groupBox_2">
+        <property name="title">
+         <string>Sound Recording</string>
+        </property>
+        <widget class="QLabel" name="label_39">
+         <property name="geometry">
+          <rect>
+           <x>10</x>
+           <y>50</y>
+           <width>181</width>
+           <height>31</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>Audio Sample Rate</string>
+         </property>
+        </widget>
+        <widget class="QLabel" name="label_40">
+         <property name="enabled">
+          <bool>false</bool>
+         </property>
+         <property name="geometry">
+          <rect>
+           <x>10</x>
+           <y>100</y>
+           <width>251</width>
+           <height>31</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>Delay relative to Broadcast (s)</string>
+         </property>
+        </widget>
+        <widget class="QLabel" name="label_41">
+         <property name="geometry">
+          <rect>
+           <x>10</x>
+           <y>140</y>
+           <width>201</width>
+           <height>31</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>Recording Duration (s)</string>
+         </property>
+        </widget>
+        <widget class="QLineEdit" name="recording_sample_rate">
+         <property name="geometry">
+          <rect>
+           <x>290</x>
+           <y>50</y>
+           <width>221</width>
+           <height>34</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>4410</string>
+         </property>
+        </widget>
+        <widget class="QLineEdit" name="recording_duration">
+         <property name="geometry">
+          <rect>
+           <x>290</x>
+           <y>150</y>
+           <width>221</width>
+           <height>34</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>1.2</string>
+         </property>
+        </widget>
+        <widget class="QLineEdit" name="delay_broadcast_recording">
+         <property name="enabled">
+          <bool>false</bool>
+         </property>
+         <property name="geometry">
+          <rect>
+           <x>290</x>
+           <y>100</y>
+           <width>221</width>
+           <height>34</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>0</string>
+         </property>
+        </widget>
+       </widget>
+      </item>
+      <item row="2" column="0" colspan="2">
+       <widget class="QGroupBox" name="groupBox_3">
+        <property name="title">
+         <string>Depth Map Recording</string>
+        </property>
+        <widget class="QLabel" name="label_44">
+         <property name="geometry">
+          <rect>
+           <x>10</x>
+           <y>40</y>
+           <width>231</width>
+           <height>41</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>- Stereo Calibrate
+ Calibrated Parameters:</string>
+         </property>
+        </widget>
+        <widget class="QLabel" name="label_45">
+         <property name="geometry">
+          <rect>
+           <x>10</x>
+           <y>100</y>
+           <width>361</width>
+           <height>41</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>- Stereo Rectify 
+Calibrated Parameters:</string>
+         </property>
+        </widget>
+        <widget class="QPushButton" name="change_stereo_rectify_path_echo_depth">
+         <property name="geometry">
+          <rect>
+           <x>540</x>
+           <y>120</y>
+           <width>108</width>
+           <height>34</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>Change</string>
+         </property>
+        </widget>
+        <widget class="QLineEdit" name="stereo_calibrate_param_path_echo_depth">
+         <property name="geometry">
+          <rect>
+           <x>240</x>
+           <y>40</y>
+           <width>281</width>
+           <height>41</height>
+          </rect>
+         </property>
+        </widget>
+        <widget class="QLineEdit" name="stereo_rectify_param_path_echo_depth">
+         <property name="geometry">
+          <rect>
+           <x>240</x>
+           <y>110</y>
+           <width>281</width>
+           <height>41</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string/>
+         </property>
+        </widget>
+        <widget class="QPushButton" name="change_stereo_calib_path_echo_depth">
+         <property name="geometry">
+          <rect>
+           <x>540</x>
+           <y>50</y>
+           <width>108</width>
+           <height>34</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>Change</string>
+         </property>
+        </widget>
+        <widget class="QLabel" name="label_47">
+         <property name="geometry">
+          <rect>
+           <x>20</x>
+           <y>160</y>
+           <width>761</width>
+           <height>31</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>Remember to choose the Disparity SGMB paramteres and cameras in the first Tab!</string>
+         </property>
+        </widget>
+        <widget class="QRadioButton" name="use_average_image">
+         <property name="geometry">
+          <rect>
+           <x>730</x>
+           <y>50</y>
+           <width>321</width>
+           <height>32</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>Use average image of each pulse</string>
+         </property>
+         <property name="checked">
+          <bool>true</bool>
+         </property>
+        </widget>
+        <widget class="QRadioButton" name="use_middle_image">
+         <property name="geometry">
+          <rect>
+           <x>730</x>
+           <y>100</y>
+           <width>351</width>
+           <height>32</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>Use image in the middle of each pulse</string>
+         </property>
+        </widget>
+       </widget>
+      </item>
+      <item row="0" column="0">
+       <widget class="QGroupBox" name="groupBox">
+        <property name="title">
+         <string>Sound Pulse Broadcast</string>
+        </property>
+        <widget class="QLabel" name="frequency_l">
+         <property name="geometry">
+          <rect>
+           <x>10</x>
+           <y>40</y>
+           <width>151</width>
+           <height>31</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>Frequency (Hz)</string>
+         </property>
+        </widget>
+        <widget class="QLabel" name="label_37">
+         <property name="geometry">
+          <rect>
+           <x>10</x>
+           <y>90</y>
+           <width>181</width>
+           <height>31</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>Pulse Duration (s)</string>
+         </property>
+        </widget>
+        <widget class="QLabel" name="label_38">
+         <property name="geometry">
+          <rect>
+           <x>10</x>
+           <y>140</y>
+           <width>181</width>
+           <height>31</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>Audio Sample Rate</string>
+         </property>
+        </widget>
+        <widget class="QRadioButton" name="gaussian_envelope">
+         <property name="geometry">
+          <rect>
+           <x>360</x>
+           <y>80</y>
+           <width>211</width>
+           <height>31</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>Gaussian Envelope</string>
+         </property>
+        </widget>
+        <widget class="QRadioButton" name="simple_sinusoid">
+         <property name="geometry">
+          <rect>
+           <x>360</x>
+           <y>40</y>
+           <width>211</width>
+           <height>31</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>Simple Sinusoid</string>
+         </property>
+         <property name="checked">
+          <bool>true</bool>
+         </property>
+        </widget>
+        <widget class="QLineEdit" name="frequency">
+         <property name="geometry">
+          <rect>
+           <x>180</x>
+           <y>40</y>
+           <width>151</width>
+           <height>34</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>440</string>
+         </property>
+        </widget>
+        <widget class="QLineEdit" name="pulse_duration">
+         <property name="geometry">
+          <rect>
+           <x>180</x>
+           <y>90</y>
+           <width>151</width>
+           <height>34</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>1</string>
+         </property>
+        </widget>
+        <widget class="QLineEdit" name="broadcast_sample_rate">
+         <property name="geometry">
+          <rect>
+           <x>180</x>
+           <y>140</y>
+           <width>151</width>
+           <height>34</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>4410</string>
+         </property>
+        </widget>
+        <widget class="QLineEdit" name="envelope_std">
+         <property name="geometry">
+          <rect>
+           <x>520</x>
+           <y>130</y>
+           <width>81</width>
+           <height>34</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>0.1</string>
+         </property>
+        </widget>
+        <widget class="QLabel" name="label_48">
+         <property name="geometry">
+          <rect>
+           <x>370</x>
+           <y>130</y>
+           <width>151</width>
+           <height>31</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>Enevlope Std (s)</string>
+         </property>
+        </widget>
+       </widget>
+      </item>
+     </layout>
     </widget>
    </widget>
    <widget class="QPlainTextEdit" name="log_text">
@@ -1071,7 +1571,7 @@ be divsble by 16)</string>
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1205</width>
+     <width>1195</width>
      <height>31</height>
     </rect>
    </property>
