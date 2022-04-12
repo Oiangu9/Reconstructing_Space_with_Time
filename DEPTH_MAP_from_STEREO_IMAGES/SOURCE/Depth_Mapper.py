@@ -43,6 +43,7 @@ class Depth_Mapper:
         self.h=user_defined_parameters["height"]
         self.CAMS=["CAM_LEFT", "CAM_RIGHT"]
         self.is_realsense = user_defined_parameters["is_realsense"]
+        self.laser= 1 if user_defined_parameters["laser"] else 0
 
         # Generate Disparity calculator and filters
         self.stereo_left_matcher = cv2.StereoSGBM_create(
@@ -58,6 +59,8 @@ class Depth_Mapper:
         )
 
         self.stereo_right_matcher = cv2.ximgproc.createRightMatcher(self.stereo_left_matcher)
+
+        self.disp_roi = cv2.getValidDisparityROI(self.roi_left, self.roi_right,user_defined_parameters["min_disp"],user_defined_parameters["num_disp"], user_defined_parameters["block_size"])
 
         # Filter
         self.wls_filter = cv2.ximgproc.createDisparityWLSFilter(matcher_left=self.stereo_left_matcher)
@@ -84,7 +87,7 @@ class Depth_Mapper:
 
             # disable laser
             stereo_module = device.query_sensors()[0]
-            stereo_module.set_option(rs.option.emitter_enabled, 0)
+            stereo_module.set_option(rs.option.emitter_enabled, self.laser)
 
         else:
             self.vidStreamL = cv2.VideoCapture(cam_L_idx)  # index of OBS - Nirie
@@ -179,11 +182,13 @@ class Depth_Mapper:
                                           beta=0, norm_type=cv2.NORM_MINMAX)
             return np.uint8(disparity)
 
-        if self.is_realsense:
+        if self.is_realsense and not self.use_taken_photos_life:
             pipeline = rs.pipeline()
             profile = pipeline.start(self.config)
             for warm_up in range(20):
                 frames = pipeline.wait_for_frames()
+
+        x, y, w, h = self.disp_roi
 
         for j in range(self.num_frames):
 
@@ -207,8 +212,9 @@ class Depth_Mapper:
                         continue
                     _, img_R = self.vidStreamR.retrieve()
                     _, img_L = self.vidStreamL.retrieve()
-                    cv2.imwrite(f"./OUTPUTS/LIFE_TAKE/CAM_LEFT/Life_L_{j}.png", img_L)
-                    cv2.imwrite(f"./OUTPUTS/LIFE_TAKE/CAM_RIGHT/Life_R_{j}.png", img_R)
+
+                cv2.imwrite(f"./OUTPUTS/LIFE_TAKE/CAM_LEFT/Life_L_{j}.png", img_L)
+                cv2.imwrite(f"./OUTPUTS/LIFE_TAKE/CAM_RIGHT/Life_R_{j}.png", img_R)
             else:
                 img_L = cv2.imread(f"./OUTPUTS/LIFE_TAKE/CAM_LEFT/Life_L_{j}.png")
                 img_R = cv2.imread(f"./OUTPUTS/LIFE_TAKE/CAM_RIGHT/Life_R_{j}.png")
@@ -230,29 +236,78 @@ class Depth_Mapper:
                 else:
                     grayL = rect_img_L[:,:,0]
                     grayR = rect_img_R[:,:,0]
-            # COMPUTE DISPARITIES
 
-            disparity_L = self.stereo_left_matcher.compute(grayL, grayR)  # .astype(np.float32)/16
-            disparity_R = self.stereo_right_matcher.compute(grayR, grayL)  # .astype(np.float32)/16
+            # COMPUTE DISPARITIES
+            disparity_L = self.stereo_left_matcher.compute(grayL, grayR).astype(np.float32)/16
+            disparity_R = self.stereo_right_matcher.compute(grayR, grayL).astype(np.float32)/16
             #disparity_L = np.int16(disparity_L)
             #disparity_R = np.int16(disparity_R)
-            filtered_disparity = self.wls_filter.filter(disparity_L, grayL, None, disparity_R)  # important to put "imgL" here!!! Maybe can use the colored image here!
+            filtered_disparity = self.wls_filter.filter(disparity_L, grayL, None, disparity_R).astype(np.float32)/16  # important to put "imgL" here!!! Maybe can use the colored image here!
 
+            # Only valid refion after rectification and disparity computation
+            filtered_disparity = filtered_disparity[ y:y+h, x:x+w]
+            rect_img_L = rect_img_L[ y:y+h, x:x+w]
+            # Compute 3d point cloud
+            image_3D = cv2.reprojectImageTo3D(filtered_disparity, self.Q, handleMissingValues=True)
+            image_3D = np.where(image_3D>9000, 0, image_3D)
+
+            # Output results
             total_unfiltered = np.concatenate((normalize_disparity_map(disparity_L), normalize_disparity_map(disparity_R)), axis=1)
             cv2.imwrite(f"./OUTPUTS/LIFE_TAKE/COMMON/Life_{j}_Disparity_Unfiltered.png", total_unfiltered)
             result = normalize_disparity_map(filtered_disparity)
             cv2.imwrite(f"./OUTPUTS/LIFE_TAKE/COMMON/Life_{j}_Disparity_Filtered.png", result)
 
+            np.savez(f"./OUTPUTS/LIFE_TAKE/COMMON/Life_{j}.npz", rect_img_L=rect_img_L, image_3D=image_3D, filtered_disparity=filtered_disparity)
+            if self.is_realsense and not self.use_taken_photos_life:
+                rect_img_L = np.stack((rect_img_L, rect_img_L, rect_img_L), axis=-1)
+            self._plot_disparity_and_3D(f"./OUTPUTS/LIFE_TAKE/COMMON/Life_{j}_point_cloud.png", filtered_disparity, rect_img_L, image_3D)
+
+            '''
             # We invert the rectification to obtain back an image with the original sizes
             filtered_disparity = cv2.remap(filtered_disparity, self.inv_mapLx, self.inv_mapLy, cv2.INTER_LINEAR, cv2.BORDER_CONSTANT)
 
             result = normalize_disparity_map(filtered_disparity)
             cv2.imwrite(f"./OUTPUTS/LIFE_TAKE/COMMON/Life_{j}_Disparity_Filtered_Unrectified.png", result)
+            '''
             if self.show_life_frames:
                 self.mainThreadPlotter.emit(result,
                             max(100, self.time_between_frames-(time()-begin_t)*1000),
                                             f'Life Test {j}')
             else:
                 sleep(max(0, self.time_between_frames/1000.0-(time()-begin_t))) # wait for user movement change
-        if self.is_realsense:
+        if self.is_realsense and not self.use_taken_photos_life:
             pipeline.stop()
+
+    def _plot_disparity_and_3D(self, path, filtered_disparity, rectified_imageL, image_3D):
+        fig = plt.figure(figsize=(20,20))
+        ax = fig.add_subplot(221)
+        ax.imshow(rectified_imageL[:,:,::-1])
+        ax.set_title("Rectified L image")
+        ax = fig.add_subplot(222)
+        c = ax.imshow(filtered_disparity, cmap='gray')
+        fig.colorbar(c, ax=ax, orientation='horizontal')
+        ax.set_title("Smoothed disparity range image")
+        # plot the 3D map with depth and maybe a point cloud
+        (h, w, c) = np.shape(rectified_imageL)
+        # X and Y coordinates of points in the image, spaced by 10.
+        (X, Y) = np.meshgrid(range(0, w,5), range(0, h,5))
+        ax = fig.add_subplot(223, projection='3d')
+        ax.scatter3D(X, Y, filtered_disparity[Y,X], c=rectified_imageL[Y,X,::-1].reshape(-1,3)/255.0)
+        ax.set_xlabel("x")
+        ax.set_ylabel("y")
+        ax.set_zlabel("z")
+        ax.view_init(elev=40, azim=0)
+        ax.set_title("Disparity in 3D")
+
+        ax = fig.add_subplot(224, projection='3d')
+        image_3D = image_3D[Y,X].reshape(-1, 3)
+        ax.scatter3D(image_3D[:,0], image_3D[:,1], image_3D[:,2], c=rectified_imageL[Y,X,::-1].reshape(-1,3)/255.0)
+        ax.set_xlabel("x")
+        ax.set_ylabel("y")
+        ax.set_zlabel("z")
+        #ax.set_xlim((0,650))
+        #ax.set_ylim((0, 480))
+        #ax.set_zlim((0, 900))
+        ax.view_init(elev=90, azim=93)
+        ax.set_title("Image reprojected to 3D")
+        plt.savefig(path)

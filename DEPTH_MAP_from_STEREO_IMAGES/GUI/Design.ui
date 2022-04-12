@@ -31,6 +31,26 @@
       <string>Calibrate System</string>
      </attribute>
      <layout class="QGridLayout" name="gridLayout_3">
+      <item row="15" column="0">
+       <widget class="QLineEdit" name="width">
+        <property name="enabled">
+         <bool>true</bool>
+        </property>
+        <property name="text">
+         <string>640</string>
+        </property>
+       </widget>
+      </item>
+      <item row="15" column="8">
+       <widget class="QProgressBar" name="progressBar_Calibrate">
+        <property name="value">
+         <number>0</number>
+        </property>
+        <property name="textVisible">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
       <item row="0" column="3">
        <widget class="QPushButton" name="change_working_directory">
         <property name="text">
@@ -110,16 +130,6 @@ images or allow choosing?</string>
         </property>
        </widget>
       </item>
-      <item row="17" column="8">
-       <widget class="QProgressBar" name="progressBar_Calibrate">
-        <property name="value">
-         <number>0</number>
-        </property>
-        <property name="textVisible">
-         <bool>true</bool>
-        </property>
-       </widget>
-      </item>
       <item row="1" column="3">
        <widget class="QSpinBox" name="num_photos_calibration">
         <property name="minimum">
@@ -129,7 +139,7 @@ images or allow choosing?</string>
          <number>150</number>
         </property>
         <property name="value">
-         <number>30</number>
+         <number>25</number>
         </property>
        </widget>
       </item>
@@ -172,7 +182,7 @@ previsualization</string>
       <item row="3" column="3">
        <widget class="QRadioButton" name="allow_choosing">
         <property name="text">
-         <string>Allow Choosing</string>
+         <string>A&amp;llow Choosing</string>
         </property>
         <attribute name="buttonGroup">
          <string notr="true">buttonGroup</string>
@@ -227,16 +237,6 @@ previsualization</string>
         <attribute name="buttonGroup">
          <string notr="true">buttonGroup</string>
         </attribute>
-       </widget>
-      </item>
-      <item row="17" column="1" colspan="6">
-       <widget class="QPushButton" name="start_calibration">
-        <property name="autoFillBackground">
-         <bool>false</bool>
-        </property>
-        <property name="text">
-         <string>START CALIBRATION</string>
-        </property>
        </widget>
       </item>
       <item row="8" column="0">
@@ -557,6 +557,9 @@ Calibration:</string>
             <property name="checked">
              <bool>true</bool>
             </property>
+            <property name="autoExclusive">
+             <bool>false</bool>
+            </property>
            </widget>
           </item>
           <item row="1" column="0">
@@ -569,7 +572,7 @@ Calibration:</string>
           <item row="1" column="1">
            <widget class="QLineEdit" name="alpha">
             <property name="text">
-             <string>0</string>
+             <string>1</string>
             </property>
            </widget>
           </item>
@@ -761,7 +764,21 @@ be divsble by 16)</string>
         </attribute>
        </widget>
       </item>
-      <item row="14" column="5">
+      <item row="14" column="0">
+       <widget class="QLabel" name="label_36">
+        <property name="text">
+         <string>Width (640, 1280): </string>
+        </property>
+       </widget>
+      </item>
+      <item row="14" column="3">
+       <widget class="QLabel" name="label_49">
+        <property name="text">
+         <string>Height (480, 720): </string>
+        </property>
+       </widget>
+      </item>
+      <item row="15" column="3">
        <widget class="QLineEdit" name="height">
         <property name="enabled">
          <bool>true</bool>
@@ -771,27 +788,26 @@ be divsble by 16)</string>
         </property>
        </widget>
       </item>
-      <item row="14" column="0">
-       <widget class="QLabel" name="label_36">
+      <item row="17" column="8">
+       <widget class="QPushButton" name="start_calibration">
+        <property name="autoFillBackground">
+         <bool>false</bool>
+        </property>
         <property name="text">
-         <string>Width (640, 1280): </string>
+         <string>START CALIBRATION</string>
         </property>
        </widget>
       </item>
       <item row="17" column="0">
-       <widget class="QLineEdit" name="width">
-        <property name="enabled">
+       <widget class="QRadioButton" name="laser">
+        <property name="text">
+         <string>Laser ON</string>
+        </property>
+        <property name="checked">
          <bool>true</bool>
         </property>
-        <property name="text">
-         <string>640</string>
-        </property>
-       </widget>
-      </item>
-      <item row="14" column="3">
-       <widget class="QLabel" name="label_49">
-        <property name="text">
-         <string>Height (480, 720): </string>
+        <property name="autoExclusive">
+         <bool>false</bool>
         </property>
        </widget>
       </item>
@@ -1058,7 +1074,7 @@ be divsble by 16)</string>
        </rect>
       </property>
       <property name="text">
-       <string>Remove old data from Takes</string>
+       <string>Remove old &amp;data from Takes</string>
       </property>
       <property name="checked">
        <bool>false</bool>
@@ -1638,11 +1654,11 @@ Calibrated Parameters:</string>
  <connections/>
  <buttongroups>
   <buttongroup name="buttonGroup_2"/>
+  <buttongroup name="buttonGroup_3"/>
   <buttongroup name="buttonGroup">
    <property name="exclusive">
     <bool>true</bool>
    </property>
   </buttongroup>
-  <buttongroup name="buttonGroup_3"/>
  </buttongroups>
 </ui>

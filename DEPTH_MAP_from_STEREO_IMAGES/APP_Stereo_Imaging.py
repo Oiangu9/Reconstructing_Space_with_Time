@@ -236,6 +236,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         user_defined_parameters["is_realsense"] = self.use_realsense_cameras.isChecked()
         user_defined_parameters["width"] = int(self.width.text())
         user_defined_parameters["height"] = int(self.height.text())
+        user_defined_parameters["laser"]=self.laser.isChecked()
 
         self.calibrator_worker.args=(user_defined_parameters,)
         self.calibrator_worker.start()
@@ -327,6 +328,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         user_defined_parameters["is_realsense"] = self.use_realsense_cameras.isChecked()
         user_defined_parameters["width"] = int(self.width.text())
         user_defined_parameters["height"] = int(self.height.text())
+        user_defined_parameters["laser"]=self.laser.isChecked()
         
         self.life_take_worker.args=(user_defined_parameters,)
         self.life_take_worker.start()

@@ -66,6 +66,7 @@ class Stereo_Calibrator:
         self.is_realsense = user_defined_parameters["is_realsense"]
         self.h = user_defined_parameters["height"]
         self.w = user_defined_parameters["width"]
+        self.laser= 1 if user_defined_parameters["laser"] else 0
 
         """
         # Execution Pipeline
@@ -130,7 +131,7 @@ class Stereo_Calibrator:
 
             # disable laser
             stereo_module = device.query_sensors()[0]
-            stereo_module.set_option(rs.option.emitter_enabled, 0)
+            stereo_module.set_option(rs.option.emitter_enabled, self.laser)
 
         else:
             self.vidStreamL = cv2.VideoCapture(cam_L_idx)  # index of OBS - Nirie
@@ -611,9 +612,12 @@ class Stereo_Calibrator:
             if not self.is_realsense:
                 rectified_imageL=cv2.cvtColor(rectified_imageL, cv2.COLOR_BGR2GRAY)
                 rectified_imageR=cv2.cvtColor(rectified_imageR, cv2.COLOR_BGR2GRAY)
-            #x, y, w, h = self.roi_left
-            #rectified_imageL = rectified_imageL[ x:x+w, y:y+h]
-            #x, y, w, h = self.roi_right
+            '''
+            x, y, w, h = self.roi_left
+            rectified_imageL = rectified_imageL[ y:y+h, x:x+w]
+            x, y, w, h = self.roi_right
+            rectified_imageR = rectified_imageR[ y:y+h, x:x+w]
+            '''
             #rectified_imageR = rectified_imageR[y:y+h, x:x+w]
             axes[0].imshow(rectified_imageL, cmap='gray')
             axes[1].imshow(rectified_imageR, cmap='gray')
@@ -693,6 +697,10 @@ class Stereo_Calibrator:
             #disparity_plot = (255*(disparity-disparity.min())/(disparity.max()-disparity.min())).astype(np.uint8)
             cv2.imwrite(f"./OUTPUTS/CALIBRATION/COMMON/Disparities_Chess_Samples/Normalized_{tag}_disparity_{(i+1):06}.png", disparity_plot)
 
+        self.disp_roi = cv2.getValidDisparityROI(self.roi_left, self.roi_right, self.min_disp, self.num_disp, self.block_size)
+
+        x, y, w, h = self.disp_roi
+
         for i, (file_nameL, file_nameR) in enumerate(zip(different_chess_views_rectified_L, different_chess_views_rectified_R)):
             rectified_imageL = cv2.imread(file_nameL)
             rectified_imageR = cv2.imread(file_nameR)
@@ -704,15 +712,19 @@ class Stereo_Calibrator:
                 grayR = rectified_imageR[:,:,0]
 
             # Compute DISPARITY MAPS from L and R
-            disparity_L = self.stereo_left_matcher.compute(grayL, grayR)  # .astype(np.float32)/16
-            disparity_R = self.stereo_right_matcher.compute(grayR, grayL)  # .astype(np.float32)/16
+            disparity_L = self.stereo_left_matcher.compute(grayL, grayR).astype(np.float32)/16
+            disparity_R = self.stereo_right_matcher.compute(grayR, grayL).astype(np.float32)/16
             logging.info(f"dtype disparity_L {disparity_L.dtype} ({disparity_L.min()}, {disparity_L.max()}) {disparity_R.dtype} ({disparity_R.min()}, {disparity_R.max()}) ")
             #disparity_L = np.int16(disparity_L)
             #disparity_R = np.int16(disparity_R)
             # Use both to generate a filtered disparity map for the left image
             filtered_disparity = self.wls_filter.filter(disparity_L, grayL, disparity_map_right=disparity_R)  # important to put "imgL" here!!! Maybe can use the colored image here!
-            logging.info(f"filtered_disparity {filtered_disparity.dtype} ({filtered_disparity.min()}, {filtered_disparity.max()})")
+            # According to the documentation we should do this division and conversion
+            filtered_disparity = (filtered_disparity/16.0).astype(np.float32)
 
+            # Only valid refion after rectification and disparity computation
+            filtered_disparity = filtered_disparity[ y:y+h, x:x+w]
+            rectified_imageL = rectified_imageL[ y:y+h, x:x+w]
 
             # Normalize the values to a range from 0..255 for a grayscale image of the disparity map
             normalize_and_plot_disparity_map(disparity_L, "L", i)
@@ -720,9 +732,6 @@ class Stereo_Calibrator:
             normalize_and_plot_disparity_map(filtered_disparity, "Filtered", i)
 
             # Obtain the DEPTH MAP
-            # According to the documentation we should do this division and conversion
-            filtered_disparity = (filtered_disparity/16.0).astype(np.float32)
-
             # And voila, we get an array [h,w,3] with the 3D coordinates (in the units of the chess world points we inputed)
             # of each pixel in the image of the Left! Thus we chose the Left camera to be better
             # Input single-channel 8-bit unsigned, 16-bit signed, 32-bit signed or 32-bit floating-point disparity image
@@ -753,7 +762,7 @@ class Stereo_Calibrator:
         ax.set_xlabel("x")
         ax.set_ylabel("y")
         ax.set_zlabel("z")
-        ax.view_init(elev=30, azim=93)
+        ax.view_init(elev=40, azim=0)
         ax.set_title("Disparity in 3D")
 
         ax = fig.add_subplot(224, projection='3d')
@@ -762,10 +771,10 @@ class Stereo_Calibrator:
         ax.set_xlabel("x")
         ax.set_ylabel("y")
         ax.set_zlabel("z")
-        ax.set_xlim((0,650))
-        ax.set_ylim((0, 480))
-        ax.set_zlim((0, 900))
-        ax.view_init(elev=30, azim=93)
+        #ax.set_xlim((0,650))
+        #ax.set_ylim((0, 480))
+        #ax.set_zlim((0, 900))
+        ax.view_init(elev=90, azim=93)
         ax.set_title("Image reprojected to 3D")
         plt.savefig(path)
 
@@ -780,7 +789,7 @@ class Stereo_Calibrator:
             #disparity = (255*(disparity-disparity.min())/(disparity.max()-disparity.min())).astype(np.uint8)
             return disparity
 
-        if self.is_realsense:
+        if self.is_realsense and not use_taken_photos_test:
             pipeline = rs.pipeline()
             profile = pipeline.start(self.config)
             for warm_up in range(20):
@@ -831,11 +840,11 @@ class Stereo_Calibrator:
 
             # COMPUTE DISPARITIES
 
-            disparity_L = self.stereo_left_matcher.compute(grayL, grayR)  # .astype(np.float32)/16
-            disparity_R = self.stereo_right_matcher.compute(grayR, grayL)  # .astype(np.float32)/16
+            disparity_L = self.stereo_left_matcher.compute(grayL, grayR).astype(np.float32)/16
+            disparity_R = self.stereo_right_matcher.compute(grayR, grayL).astype(np.float32)/16
             #disparity_L = np.int16(disparity_L)
             #disparity_R = np.int16(disparity_R)
-            filtered_disparity = self.wls_filter.filter(disparity_L, grayL, disparity_map_right=disparity_R)  # important to put "imgL" here!!! Maybe can use the colored image here!
+            filtered_disparity = self.wls_filter.filter(disparity_L, grayL, disparity_map_right=disparity_R).astype(np.float32)/16  # important to put "imgL" here!!! Maybe can use the colored image here!
 
             total_unfiltered = np.concatenate((normalize_disparity_map(disparity_L), normalize_disparity_map(disparity_R)), axis=1)
             total_filtered = np.concatenate( (normalize_disparity_map(filtered_disparity), np.zeros(filtered_disparity.shape)), axis=1 )
@@ -843,12 +852,16 @@ class Stereo_Calibrator:
             cv2.imwrite(f"./OUTPUTS/CALIBRATION/COMMON/Life_Test/Life_{j}.png", joint_images)
             self.mainThreadPlotter.emit(result, 2000, f'Life Test {j}')
 
+            x, y, w, h = self.disp_roi
+            filtered_disparity = filtered_disparity[ y:y+h, x:x+w]
+            rect_img_L = rect_img_L[ y:y+h, x:x+w]
+
             image_3D = cv2.reprojectImageTo3D(filtered_disparity, self.Q, handleMissingValues=True)
             image_3D = np.where(image_3D>9000, 0, image_3D)
-            if self.is_realsense:
+            if self.is_realsense and not use_taken_photos_test:
                 rect_img_L = np.stack((rect_img_L, rect_img_L, rect_img_L), axis=-1)
             self._plot_disparity_and_3D(f"./OUTPUTS/CALIBRATION/COMMON/Life_Test/Life_point_cloud_{j}.png", filtered_disparity, rect_img_L, image_3D)
-        if self.is_realsense:
+        if self.is_realsense and not use_taken_photos_test:
             pipeline.stop()
 
 
