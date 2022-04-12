@@ -10,6 +10,12 @@ import logging
 import glob
 import matplotlib as plt
 
+try:
+    import pyrealsense2 as rs
+    disable_realsense_cam = False
+except:
+    disable_realsense_cam = True
+
 # pyuic5 -x Design.ui -o Design_ui.py
 # sudo modprobe v4l2loopback
 # v4l2-ctl --list-devices
@@ -97,6 +103,12 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
         # Generate a code signaler
         #self.waitingPhotos = QtCore.pyqtSignal()
+
+        # disable realsese camera if not installed
+        if disable_realsense_cam:
+            self.use_realsense_cameras.setChecked(False)
+            self.use_realsense_cameras.setEnabled(False)
+            self.use_standard_cameras.setChecked(True)
 
         # We connect the events with their actions
         self.start_calibration.clicked.connect(self.executeCalibration)
@@ -221,6 +233,9 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         user_defined_parameters["lmbda"]= int(self.lmbda.text())
         user_defined_parameters["sigma"]= float(self.sigma.text())
         user_defined_parameters["visual_multiplier"]= int(self.visual_multiplier.text())
+        user_defined_parameters["is_realsense"] = self.use_realsense_cameras.isChecked()
+        user_defined_parameters["width"] = int(self.width.text())
+        user_defined_parameters["height"] = int(self.height.text())
 
         self.calibrator_worker.args=(user_defined_parameters,)
         self.calibrator_worker.start()
@@ -239,7 +254,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         os.chdir(user_defined_parameters["working_directory"])
         self.barUpdate_Calibrate.emit(1)
 
-        if True: # only then need for cameras
+        if (not self.use_taken_photos_test.isChecked()) or (not self.use_taken_photos.isChecked()): # only then need for cameras
             ret = stereo_Calibrator.setCameras(int(self.cam_L_idx.value()),
                                                 int(self.cam_R_idx.value())) #%5
             if (ret==1):
@@ -309,7 +324,10 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         user_defined_parameters["lmbda"]= int(self.lmbda.text())
         user_defined_parameters["sigma"]= float(self.sigma.text())
         user_defined_parameters["visual_multiplier"]= int(self.visual_multiplier.text())
-
+        user_defined_parameters["is_realsense"] = self.use_realsense_cameras.isChecked()
+        user_defined_parameters["width"] = int(self.width.text())
+        user_defined_parameters["height"] = int(self.height.text())
+        
         self.life_take_worker.args=(user_defined_parameters,)
         self.life_take_worker.start()
 

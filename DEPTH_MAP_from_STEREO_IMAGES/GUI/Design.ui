@@ -24,7 +24,7 @@
      </rect>
     </property>
     <property name="currentIndex">
-     <number>2</number>
+     <number>0</number>
     </property>
     <widget class="QWidget" name="Calibrate_System">
      <attribute name="title">
@@ -41,7 +41,7 @@
       <item row="13" column="8">
        <widget class="QRadioButton" name="use_taken_photos_test">
         <property name="text">
-         <string>Use already taken photos for testing</string>
+         <string>&amp;Use already taken photos for testing</string>
         </property>
         <property name="autoExclusive">
          <bool>false</bool>
@@ -51,7 +51,7 @@
       <item row="13" column="3">
        <widget class="QLabel" name="label_31">
         <property name="text">
-         <string>Right:</string>
+         <string>Right cam idx:</string>
         </property>
        </widget>
       </item>
@@ -129,7 +129,7 @@ images or allow choosing?</string>
          <number>150</number>
         </property>
         <property name="value">
-         <number>40</number>
+         <number>30</number>
         </property>
        </widget>
       </item>
@@ -196,7 +196,7 @@ previsualization</string>
          <bool>true</bool>
         </property>
         <property name="text">
-         <string>150</string>
+         <string>1500</string>
         </property>
        </widget>
       </item>
@@ -206,7 +206,7 @@ previsualization</string>
          <number>1</number>
         </property>
         <property name="value">
-         <number>20</number>
+         <number>7</number>
         </property>
         <property name="displayIntegerBase">
          <number>10</number>
@@ -219,7 +219,7 @@ previsualization</string>
          <bool>true</bool>
         </property>
         <property name="text">
-         <string>Take All</string>
+         <string>Ta&amp;ke All</string>
         </property>
         <property name="checked">
          <bool>true</bool>
@@ -256,7 +256,7 @@ previsualization</string>
       <item row="11" column="3">
        <widget class="QLabel" name="label_30">
         <property name="text">
-         <string>Left:</string>
+         <string>Left cam idx:</string>
         </property>
        </widget>
       </item>
@@ -267,13 +267,6 @@ previsualization</string>
         </property>
         <property name="value">
          <number>6</number>
-        </property>
-       </widget>
-      </item>
-      <item row="11" column="0">
-       <widget class="QLabel" name="label_29">
-        <property name="text">
-         <string>- Camera Indices:</string>
         </property>
        </widget>
       </item>
@@ -309,7 +302,7 @@ previsualization</string>
       <item row="1" column="7" rowspan="10" colspan="2">
        <widget class="QTabWidget" name="tabWidget_2">
         <property name="currentIndex">
-         <number>3</number>
+         <number>2</number>
         </property>
         <widget class="QWidget" name="tab">
          <attribute name="title">
@@ -407,7 +400,10 @@ Calibration:</string>
           <item row="0" column="0">
            <widget class="QRadioButton" name="CALIB_FIX_INTRINSIC">
             <property name="text">
-             <string>CALIB_FIX_INTRINSIC</string>
+             <string>CALIB_FI&amp;X_INTRINSIC</string>
+            </property>
+            <property name="checked">
+             <bool>false</bool>
             </property>
             <property name="autoExclusive">
              <bool>false</bool>
@@ -417,7 +413,7 @@ Calibration:</string>
           <item row="0" column="1">
            <widget class="QRadioButton" name="CALIB_FIX_K1">
             <property name="text">
-             <string>CALIB_FIX_K1</string>
+             <string>CALIB_FIX_K&amp;1</string>
             </property>
             <property name="autoExclusive">
              <bool>false</bool>
@@ -437,7 +433,7 @@ Calibration:</string>
           <item row="1" column="1">
            <widget class="QRadioButton" name="CALIB_FIX_K2">
             <property name="text">
-             <string>CALIB_FIX_K2</string>
+             <string>CALIB_FIX_K&amp;2</string>
             </property>
             <property name="autoExclusive">
              <bool>false</bool>
@@ -463,7 +459,7 @@ Calibration:</string>
           <item row="2" column="1">
            <widget class="QRadioButton" name="CALIB_FIX_K3">
             <property name="text">
-             <string>CALIB_FIX_K3</string>
+             <string>CALIB_FIX_K&amp;3</string>
             </property>
             <property name="autoExclusive">
              <bool>false</bool>
@@ -486,7 +482,7 @@ Calibration:</string>
           <item row="3" column="1">
            <widget class="QRadioButton" name="CALIB_FIX_K4">
             <property name="text">
-             <string>CALIB_FIX_K4</string>
+             <string>CALIB_FIX_K&amp;4</string>
             </property>
             <property name="autoExclusive">
              <bool>false</bool>
@@ -506,7 +502,7 @@ Calibration:</string>
           <item row="4" column="1">
            <widget class="QRadioButton" name="CALIB_FIX_K5">
             <property name="text">
-             <string>CALIB_FIX_K5</string>
+             <string>CALIB_FIX_K&amp;5</string>
             </property>
             <property name="autoExclusive">
              <bool>false</bool>
@@ -516,7 +512,7 @@ Calibration:</string>
           <item row="5" column="0">
            <widget class="QRadioButton" name="CALIB_ZERO_TANGENT_DIST">
             <property name="text">
-             <string>CALIB_ZERO_TANGENT_DIST</string>
+             <string>CALIB_&amp;ZERO_TANGENT_DIST</string>
             </property>
             <property name="autoExclusive">
              <bool>false</bool>
@@ -526,7 +522,7 @@ Calibration:</string>
           <item row="5" column="1">
            <widget class="QRadioButton" name="CALIB_FIX_K6">
             <property name="text">
-             <string>CALIB_FIX_K6</string>
+             <string>CALIB_FIX_K&amp;6</string>
             </property>
             <property name="autoExclusive">
              <bool>false</bool>
@@ -556,7 +552,7 @@ Calibration:</string>
           <item row="0" column="0" colspan="2">
            <widget class="QRadioButton" name="CALIB_ZERO_DISPARITY">
             <property name="text">
-             <string>CALIB_ZERO_DISPARITY</string>
+             <string>CALIB_&amp;ZERO_DISPARITY</string>
             </property>
             <property name="checked">
              <bool>true</bool>
@@ -573,7 +569,7 @@ Calibration:</string>
           <item row="1" column="1">
            <widget class="QLineEdit" name="alpha">
             <property name="text">
-             <string>1</string>
+             <string>0</string>
             </property>
            </widget>
           </item>
@@ -739,6 +735,66 @@ be divsble by 16)</string>
         </widget>
        </widget>
       </item>
+      <item row="11" column="0">
+       <widget class="QRadioButton" name="use_realsense_cameras">
+        <property name="text">
+         <string>Use RealSense IR Cameras</string>
+        </property>
+        <property name="checked">
+         <bool>true</bool>
+        </property>
+        <attribute name="buttonGroup">
+         <string notr="true">buttonGroup_3</string>
+        </attribute>
+       </widget>
+      </item>
+      <item row="13" column="0">
+       <widget class="QRadioButton" name="use_standard_camera">
+        <property name="text">
+         <string>Use Standard Cameras</string>
+        </property>
+        <property name="checked">
+         <bool>false</bool>
+        </property>
+        <attribute name="buttonGroup">
+         <string notr="true">buttonGroup_3</string>
+        </attribute>
+       </widget>
+      </item>
+      <item row="14" column="5">
+       <widget class="QLineEdit" name="height">
+        <property name="enabled">
+         <bool>true</bool>
+        </property>
+        <property name="text">
+         <string>480</string>
+        </property>
+       </widget>
+      </item>
+      <item row="14" column="0">
+       <widget class="QLabel" name="label_36">
+        <property name="text">
+         <string>Width (640, 1280): </string>
+        </property>
+       </widget>
+      </item>
+      <item row="17" column="0">
+       <widget class="QLineEdit" name="width">
+        <property name="enabled">
+         <bool>true</bool>
+        </property>
+        <property name="text">
+         <string>640</string>
+        </property>
+       </widget>
+      </item>
+      <item row="14" column="3">
+       <widget class="QLabel" name="label_49">
+        <property name="text">
+         <string>Height (480, 720): </string>
+        </property>
+       </widget>
+      </item>
      </layout>
     </widget>
     <widget class="QWidget" name="Generate_Depth_Maps">
@@ -849,7 +905,7 @@ be divsble by 16)</string>
        </rect>
       </property>
       <property name="text">
-       <string>Save Taken Sequence</string>
+       <string>Save Ta&amp;ken Sequence</string>
       </property>
       <property name="checked">
        <bool>true</bool>
@@ -919,7 +975,7 @@ be divsble by 16)</string>
        </rect>
       </property>
       <property name="text">
-       <string>Show frames while taking sequence</string>
+       <string>Show frames while taking se&amp;quence</string>
       </property>
       <property name="checked">
        <bool>true</bool>
@@ -1024,7 +1080,7 @@ be divsble by 16)</string>
        </rect>
       </property>
       <property name="text">
-       <string>Use already taken photos </string>
+       <string>&amp;Use already taken photos </string>
       </property>
       <property name="checked">
        <bool>true</bool>
@@ -1384,7 +1440,7 @@ Calibrated Parameters:</string>
           </rect>
          </property>
          <property name="text">
-          <string>Use average image of each pulse</string>
+          <string>&amp;Use average image of each pulse</string>
          </property>
          <property name="checked">
           <bool>true</bool>
@@ -1459,7 +1515,7 @@ Calibrated Parameters:</string>
           </rect>
          </property>
          <property name="text">
-          <string>Gaussian Envelope</string>
+          <string>&amp;Gaussian Envelope</string>
          </property>
         </widget>
         <widget class="QRadioButton" name="simple_sinusoid">
@@ -1572,7 +1628,7 @@ Calibrated Parameters:</string>
      <x>0</x>
      <y>0</y>
      <width>1195</width>
-     <height>31</height>
+     <height>38</height>
     </rect>
    </property>
   </widget>
@@ -1581,11 +1637,12 @@ Calibrated Parameters:</string>
  <resources/>
  <connections/>
  <buttongroups>
+  <buttongroup name="buttonGroup_2"/>
   <buttongroup name="buttonGroup">
    <property name="exclusive">
     <bool>true</bool>
    </property>
   </buttongroup>
-  <buttongroup name="buttonGroup_2"/>
+  <buttongroup name="buttonGroup_3"/>
  </buttongroups>
 </ui>
