@@ -37,8 +37,8 @@ class Depth_Mapper:
 
         self.num_frames = user_defined_parameters["frame_number"]
         self.time_between_frames = user_defined_parameters["time_between_frames"]
-        self.show_life_frames = user_defined_parameters["show_life_frames"]
-        self.use_taken_photos_life = user_defined_parameters["use_taken_photos_life"]
+        self.show_live_frames = user_defined_parameters["show_live_frames"]
+        self.use_taken_photos_live = user_defined_parameters["use_taken_photos_live"]
         self.w=user_defined_parameters["width"]
         self.h=user_defined_parameters["height"]
         self.CAMS=["CAM_LEFT", "CAM_RIGHT"]
@@ -109,17 +109,17 @@ class Depth_Mapper:
         # Build directory structure
         logging.info("2. Building Directory Structure...")
         if remove_old_data:
-            shutil.rmtree(f"./OUTPUTS/LIFE_TAKE/", ignore_errors=True)
+            shutil.rmtree(f"./OUTPUTS/Live_TAKE/", ignore_errors=True)
         else: # then use old data -> expects OUTPUTS laready exists
-            if not os.path.isdir("./OUTPUTS/LIFE_TAKE"):
+            if not os.path.isdir("./OUTPUTS/Live_TAKE"):
                 #logging.error("\n[ERROR] If old data is to use, there should exist an ./OUTPUT directory in working directory!")
                 return 1
-        os.makedirs("./OUTPUTS/LIFE_TAKE", exist_ok=True)
+        os.makedirs("./OUTPUTS/Live_TAKE", exist_ok=True)
 
 
         for CAM in ["CAM_LEFT", "CAM_RIGHT"]:
-            os.makedirs(f"./OUTPUTS/LIFE_TAKE/{CAM}", exist_ok=True)
-        os.makedirs(f"./OUTPUTS/LIFE_TAKE/COMMON/", exist_ok=True)
+            os.makedirs(f"./OUTPUTS/Live_TAKE/{CAM}", exist_ok=True)
+        os.makedirs(f"./OUTPUTS/Live_TAKE/COMMON/", exist_ok=True)
         return 0
 
     def invert_maps_noInterpol(self, map_x, map_y):
@@ -182,7 +182,7 @@ class Depth_Mapper:
                                           beta=0, norm_type=cv2.NORM_MINMAX)
             return np.uint8(disparity)
 
-        if self.is_realsense and not self.use_taken_photos_life:
+        if self.is_realsense and not self.use_taken_photos_live:
             pipeline = rs.pipeline()
             profile = pipeline.start(self.config)
             for warm_up in range(20):
@@ -198,7 +198,7 @@ class Depth_Mapper:
             begin_t = time()
             # instead of using .read() to get an image we decompose it into .grab and then .retrieve
             # so we can maximize the sinchronization
-            if not self.use_taken_photos_life:
+            if not self.use_taken_photos_live:
                 if self.is_realsense:
                     frames = pipeline.wait_for_frames()
                     ir1_frame = frames.get_infrared_frame(1) # Left IR Camera, it allows 0, 1 or no input
@@ -213,24 +213,24 @@ class Depth_Mapper:
                     _, img_R = self.vidStreamR.retrieve()
                     _, img_L = self.vidStreamL.retrieve()
 
-                cv2.imwrite(f"./OUTPUTS/LIFE_TAKE/CAM_LEFT/Life_L_{j}.png", img_L)
-                cv2.imwrite(f"./OUTPUTS/LIFE_TAKE/CAM_RIGHT/Life_R_{j}.png", img_R)
+                cv2.imwrite(f"./OUTPUTS/Live_TAKE/CAM_LEFT/Live_L_{j}.png", img_L)
+                cv2.imwrite(f"./OUTPUTS/Live_TAKE/CAM_RIGHT/Live_R_{j}.png", img_R)
             else:
-                img_L = cv2.imread(f"./OUTPUTS/LIFE_TAKE/CAM_LEFT/Life_L_{j}.png")
-                img_R = cv2.imread(f"./OUTPUTS/LIFE_TAKE/CAM_RIGHT/Life_R_{j}.png")
+                img_L = cv2.imread(f"./OUTPUTS/Live_TAKE/CAM_LEFT/Live_L_{j}.png")
+                img_R = cv2.imread(f"./OUTPUTS/Live_TAKE/CAM_RIGHT/Live_R_{j}.png")
 
             # RECTIFY THE IMAGE
             rect_img_L = cv2.remap(img_L, self.mapLx, self.mapLy, cv2.INTER_LANCZOS4, cv2.BORDER_CONSTANT)
             rect_img_R = cv2.remap(img_R, self.mapRx, self.mapRy, cv2.INTER_LANCZOS4, cv2.BORDER_CONSTANT)
             result = np.concatenate((rect_img_L,rect_img_R), axis=1)
-            cv2.imwrite(f"./OUTPUTS/LIFE_TAKE/COMMON/Life_{j}_color.png", result)
+            cv2.imwrite(f"./OUTPUTS/Live_TAKE/COMMON/Live_{j}_color.png", result)
 
             # GRAYSCALE THE IMAGES
             if not self.is_realsense:
                 grayL = cv2.cvtColor(rect_img_L, cv2.COLOR_BGR2GRAY)
                 grayR = cv2.cvtColor(rect_img_R, cv2.COLOR_BGR2GRAY)
             else:
-                if not self.use_taken_photos_life:
+                if not self.use_taken_photos_live:
                     grayL = rect_img_L
                     grayR = rect_img_R
                 else:
@@ -253,29 +253,29 @@ class Depth_Mapper:
 
             # Output results
             total_unfiltered = np.concatenate((normalize_disparity_map(disparity_L), normalize_disparity_map(disparity_R)), axis=1)
-            cv2.imwrite(f"./OUTPUTS/LIFE_TAKE/COMMON/Life_{j}_Disparity_Unfiltered.png", total_unfiltered)
+            cv2.imwrite(f"./OUTPUTS/Live_TAKE/COMMON/Live_{j}_Disparity_Unfiltered.png", total_unfiltered)
             result = normalize_disparity_map(filtered_disparity)
-            cv2.imwrite(f"./OUTPUTS/LIFE_TAKE/COMMON/Life_{j}_Disparity_Filtered.png", result)
+            cv2.imwrite(f"./OUTPUTS/Live_TAKE/COMMON/Live_{j}_Disparity_Filtered.png", result)
 
-            np.savez(f"./OUTPUTS/LIFE_TAKE/COMMON/Life_{j}.npz", rect_img_L=rect_img_L, image_3D=image_3D, filtered_disparity=filtered_disparity)
-            if self.is_realsense and not self.use_taken_photos_life:
+            np.savez(f"./OUTPUTS/Live_TAKE/COMMON/Live_{j}.npz", rect_img_L=rect_img_L, image_3D=image_3D, filtered_disparity=filtered_disparity)
+            if self.is_realsense and not self.use_taken_photos_live:
                 rect_img_L = np.stack((rect_img_L, rect_img_L, rect_img_L), axis=-1)
-            self._plot_disparity_and_3D(f"./OUTPUTS/LIFE_TAKE/COMMON/Life_{j}_point_cloud.png", filtered_disparity, rect_img_L, image_3D)
+            self._plot_disparity_and_3D(f"./OUTPUTS/Live_TAKE/COMMON/Live_{j}_point_cloud.png", filtered_disparity, rect_img_L, image_3D)
 
             '''
             # We invert the rectification to obtain back an image with the original sizes
             filtered_disparity = cv2.remap(filtered_disparity, self.inv_mapLx, self.inv_mapLy, cv2.INTER_LINEAR, cv2.BORDER_CONSTANT)
 
             result = normalize_disparity_map(filtered_disparity)
-            cv2.imwrite(f"./OUTPUTS/LIFE_TAKE/COMMON/Life_{j}_Disparity_Filtered_Unrectified.png", result)
+            cv2.imwrite(f"./OUTPUTS/Live_TAKE/COMMON/Live_{j}_Disparity_Filtered_Unrectified.png", result)
             '''
-            if self.show_life_frames:
+            if self.show_live_frames:
                 self.mainThreadPlotter.emit(result,
                             max(100, self.time_between_frames-(time()-begin_t)*1000),
-                                            f'Life Test {j}')
+                                            f'Live Test {j}')
             else:
                 sleep(max(0, self.time_between_frames/1000.0-(time()-begin_t))) # wait for user movement change
-        if self.is_realsense and not self.use_taken_photos_life:
+        if self.is_realsense and not self.use_taken_photos_live:
             pipeline.stop()
 
     def _plot_disparity_and_3D(self, path, filtered_disparity, rectified_imageL, image_3D):

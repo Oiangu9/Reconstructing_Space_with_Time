@@ -24,7 +24,7 @@
      </rect>
     </property>
     <property name="currentIndex">
-     <number>0</number>
+     <number>2</number>
     </property>
     <widget class="QWidget" name="Calibrate_System">
      <attribute name="title">
@@ -198,7 +198,11 @@ previsualization</string>
        </widget>
       </item>
       <item row="0" column="4" colspan="5">
-       <widget class="QLineEdit" name="working_directory"/>
+       <widget class="QLineEdit" name="working_directory">
+        <property name="text">
+         <string>/home/melanie/Desktop/Reconstructing_Space_with_Time/DEPTH_MAP_from_STEREO_IMAGES</string>
+        </property>
+       </widget>
       </item>
       <item row="6" column="3">
        <widget class="QLineEdit" name="previs_ms">
@@ -302,7 +306,7 @@ previsualization</string>
       <item row="1" column="7" rowspan="10" colspan="2">
        <widget class="QTabWidget" name="tabWidget_2">
         <property name="currentIndex">
-         <number>2</number>
+         <number>3</number>
         </property>
         <widget class="QWidget" name="tab">
          <attribute name="title">
@@ -826,6 +830,9 @@ be divsble by 16)</string>
         <height>41</height>
        </rect>
       </property>
+      <property name="text">
+       <string>./OUTPUTS/CALIBRATION/COMMON/Calibrated_Parameters/Stereo_Calibrate_rms_KL_DL_KR_DR_R_T_E_F.npz</string>
+      </property>
      </widget>
      <widget class="QLabel" name="label_7">
       <property name="geometry">
@@ -882,7 +889,7 @@ be divsble by 16)</string>
        </rect>
       </property>
       <property name="text">
-       <string/>
+       <string>./OUTPUTS/CALIBRATION/COMMON/Calibrated_Parameters/Stereo_Rectify_R1_R2_P1_P2_Q_roi_left_roi_right.npz</string>
       </property>
      </widget>
      <widget class="QLabel" name="label_13">
@@ -978,10 +985,10 @@ be divsble by 16)</string>
        </font>
       </property>
       <property name="text">
-       <string>Parameters for life takes</string>
+       <string>Parameters for live takes</string>
       </property>
      </widget>
-     <widget class="QRadioButton" name="show_life_frames">
+     <widget class="QRadioButton" name="show_live_frames">
       <property name="geometry">
        <rect>
         <x>630</x>
@@ -1048,7 +1055,7 @@ be divsble by 16)</string>
        <string>GO</string>
       </property>
      </widget>
-     <widget class="QProgressBar" name="progressBar_Life">
+     <widget class="QProgressBar" name="progressBar_Live">
       <property name="geometry">
        <rect>
         <x>520</x>
@@ -1064,7 +1071,7 @@ be divsble by 16)</string>
        <bool>true</bool>
       </property>
      </widget>
-     <widget class="QRadioButton" name="remove_old_data_life">
+     <widget class="QRadioButton" name="remove_old_data_live">
       <property name="geometry">
        <rect>
         <x>630</x>
@@ -1086,7 +1093,7 @@ be divsble by 16)</string>
        <bool>true</bool>
       </property>
      </widget>
-     <widget class="QRadioButton" name="use_taken_photos_life">
+     <widget class="QRadioButton" name="use_taken_photos_live">
       <property name="geometry">
        <rect>
         <x>630</x>
@@ -1164,6 +1171,9 @@ be divsble by 16)</string>
            <height>34</height>
           </rect>
          </property>
+         <property name="text">
+          <string>./OUTPUTS</string>
+         </property>
         </widget>
         <widget class="QLabel" name="label_43">
          <property name="geometry">
@@ -1189,14 +1199,14 @@ to take:</string>
           </rect>
          </property>
          <property name="text">
-          <string>100</string>
+          <string>10</string>
          </property>
         </widget>
         <widget class="QRadioButton" name="erase_old_data_echo_depth">
          <property name="geometry">
           <rect>
-           <x>30</x>
-           <y>230</y>
+           <x>40</x>
+           <y>240</y>
            <width>161</width>
            <height>32</height>
           </rect>
@@ -1215,7 +1225,7 @@ to take:</string>
           </rect>
          </property>
          <property name="text">
-          <string>2</string>
+          <string>1</string>
          </property>
         </widget>
         <widget class="QLabel" name="label_46">
@@ -1258,6 +1268,25 @@ to take:</string>
 in directory To Erase</string>
          </property>
         </widget>
+        <widget class="QRadioButton" name="show_live_frames_echo">
+         <property name="geometry">
+          <rect>
+           <x>280</x>
+           <y>240</y>
+           <width>221</width>
+           <height>32</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>Show taken farmes live</string>
+         </property>
+         <property name="checked">
+          <bool>true</bool>
+         </property>
+         <property name="autoExclusive">
+          <bool>false</bool>
+         </property>
+        </widget>
        </widget>
       </item>
       <item row="1" column="0">
@@ -1278,75 +1307,167 @@ in directory To Erase</string>
           <string>Audio Sample Rate</string>
          </property>
         </widget>
-        <widget class="QLabel" name="label_40">
-         <property name="enabled">
-          <bool>false</bool>
-         </property>
-         <property name="geometry">
-          <rect>
-           <x>10</x>
-           <y>100</y>
-           <width>251</width>
-           <height>31</height>
-          </rect>
-         </property>
-         <property name="text">
-          <string>Delay relative to Broadcast (s)</string>
-         </property>
-        </widget>
         <widget class="QLabel" name="label_41">
          <property name="geometry">
           <rect>
            <x>10</x>
-           <y>140</y>
-           <width>201</width>
-           <height>31</height>
+           <y>80</y>
+           <width>241</width>
+           <height>61</height>
           </rect>
          </property>
          <property name="text">
-          <string>Recording Duration (s)</string>
+          <string>Echo Recording Duration (s)
+Total time is pulse dur.+this:</string>
          </property>
         </widget>
         <widget class="QLineEdit" name="recording_sample_rate">
          <property name="geometry">
           <rect>
-           <x>290</x>
+           <x>180</x>
            <y>50</y>
-           <width>221</width>
+           <width>91</width>
            <height>34</height>
           </rect>
          </property>
          <property name="text">
-          <string>4410</string>
+          <string>44100</string>
          </property>
         </widget>
-        <widget class="QLineEdit" name="recording_duration">
+        <widget class="QLineEdit" name="echo_duration">
          <property name="geometry">
           <rect>
-           <x>290</x>
-           <y>150</y>
-           <width>221</width>
+           <x>30</x>
+           <y>140</y>
+           <width>111</width>
            <height>34</height>
           </rect>
          </property>
          <property name="text">
-          <string>1.2</string>
+          <string>0.08+0.04</string>
          </property>
         </widget>
-        <widget class="QLineEdit" name="delay_broadcast_recording">
-         <property name="enabled">
-          <bool>false</bool>
-         </property>
+        <widget class="QLineEdit" name="lower_freq_1">
          <property name="geometry">
           <rect>
-           <x>290</x>
-           <y>100</y>
-           <width>221</width>
+           <x>460</x>
+           <y>40</y>
+           <width>91</width>
            <height>34</height>
           </rect>
          </property>
          <property name="text">
           <string>0</string>
+         </property>
+        </widget>
+        <widget class="QLabel" name="label_40">
+         <property name="geometry">
+          <rect>
+           <x>330</x>
+           <y>40</y>
+           <width>111</width>
+           <height>31</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>Erase 1 from:</string>
+         </property>
+        </widget>
+        <widget class="QLabel" name="label_50">
+         <property name="geometry">
+          <rect>
+           <x>330</x>
+           <y>80</y>
+           <width>111</width>
+           <height>31</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>to freq:</string>
+         </property>
+        </widget>
+        <widget class="QLineEdit" name="upper_freq_1">
+         <property name="geometry">
+          <rect>
+           <x>460</x>
+           <y>80</y>
+           <width>91</width>
+           <height>34</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>5000</string>
+         </property>
+        </widget>
+        <widget class="QLabel" name="label_51">
+         <property name="geometry">
+          <rect>
+           <x>330</x>
+           <y>120</y>
+           <width>111</width>
+           <height>31</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>Erase 2 from:</string>
+         </property>
+        </widget>
+        <widget class="QLineEdit" name="lower_freq_2">
+         <property name="geometry">
+          <rect>
+           <x>460</x>
+           <y>120</y>
+           <width>91</width>
+           <height>31</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>15000</string>
+         </property>
+        </widget>
+        <widget class="QLabel" name="label_52">
+         <property name="geometry">
+          <rect>
+           <x>330</x>
+           <y>150</y>
+           <width>111</width>
+           <height>31</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>to freq:</string>
+         </property>
+        </widget>
+        <widget class="QLineEdit" name="upper_freq_2">
+         <property name="geometry">
+          <rect>
+           <x>460</x>
+           <y>160</y>
+           <width>91</width>
+           <height>21</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>22050</string>
+         </property>
+        </widget>
+        <widget class="QRadioButton" name="filter_freqs">
+         <property name="geometry">
+          <rect>
+           <x>190</x>
+           <y>150</y>
+           <width>131</width>
+           <height>32</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>Filter Freqs</string>
+         </property>
+         <property name="checked">
+          <bool>true</bool>
+         </property>
+         <property name="autoExclusive">
+          <bool>false</bool>
          </property>
         </widget>
        </widget>
@@ -1406,6 +1527,9 @@ Calibrated Parameters:</string>
            <height>41</height>
           </rect>
          </property>
+         <property name="text">
+          <string>./OUTPUTS/CALIBRATION/COMMON/Calibrated_Parameters/Stereo_Calibrate_rms_KL_DL_KR_DR_R_T_E_F.npz</string>
+         </property>
         </widget>
         <widget class="QLineEdit" name="stereo_rectify_param_path_echo_depth">
          <property name="geometry">
@@ -1417,7 +1541,7 @@ Calibrated Parameters:</string>
           </rect>
          </property>
          <property name="text">
-          <string/>
+          <string>./OUTPUTS/CALIBRATION/COMMON/Calibrated_Parameters/Stereo_Rectify_R1_R2_P1_P2_Q_roi_left_roi_right.npz</string>
          </property>
         </widget>
         <widget class="QPushButton" name="change_stereo_calib_path_echo_depth">
@@ -1437,7 +1561,7 @@ Calibrated Parameters:</string>
          <property name="geometry">
           <rect>
            <x>20</x>
-           <y>160</y>
+           <y>150</y>
            <width>761</width>
            <height>31</height>
           </rect>
@@ -1533,6 +1657,9 @@ Calibrated Parameters:</string>
          <property name="text">
           <string>&amp;Gaussian Envelope</string>
          </property>
+         <property name="checked">
+          <bool>true</bool>
+         </property>
         </widget>
         <widget class="QRadioButton" name="simple_sinusoid">
          <property name="geometry">
@@ -1547,7 +1674,7 @@ Calibrated Parameters:</string>
           <string>Simple Sinusoid</string>
          </property>
          <property name="checked">
-          <bool>true</bool>
+          <bool>false</bool>
          </property>
         </widget>
         <widget class="QLineEdit" name="frequency">
@@ -1560,7 +1687,7 @@ Calibrated Parameters:</string>
           </rect>
          </property>
          <property name="text">
-          <string>440</string>
+          <string>8000</string>
          </property>
         </widget>
         <widget class="QLineEdit" name="pulse_duration">
@@ -1573,7 +1700,7 @@ Calibrated Parameters:</string>
           </rect>
          </property>
          <property name="text">
-          <string>1</string>
+          <string>0.003</string>
          </property>
         </widget>
         <widget class="QLineEdit" name="broadcast_sample_rate">
@@ -1586,20 +1713,20 @@ Calibrated Parameters:</string>
           </rect>
          </property>
          <property name="text">
-          <string>4410</string>
+          <string>44100</string>
          </property>
         </widget>
-        <widget class="QLineEdit" name="envelope_std">
+        <widget class="QLineEdit" name="envelope_std_ratio">
          <property name="geometry">
           <rect>
            <x>520</x>
            <y>130</y>
-           <width>81</width>
+           <width>41</width>
            <height>34</height>
           </rect>
          </property>
          <property name="text">
-          <string>0.1</string>
+          <string>5</string>
          </property>
         </widget>
         <widget class="QLabel" name="label_48">
@@ -1608,11 +1735,12 @@ Calibrated Parameters:</string>
            <x>370</x>
            <y>130</y>
            <width>151</width>
-           <height>31</height>
+           <height>41</height>
           </rect>
          </property>
          <property name="text">
-          <string>Enevlope Std (s)</string>
+          <string>Std to duration
+ ratio</string>
          </property>
         </widget>
        </widget>
@@ -1644,7 +1772,7 @@ Calibrated Parameters:</string>
      <x>0</x>
      <y>0</y>
      <width>1195</width>
-     <height>38</height>
+     <height>31</height>
     </rect>
    </property>
   </widget>
@@ -1654,11 +1782,11 @@ Calibrated Parameters:</string>
  <connections/>
  <buttongroups>
   <buttongroup name="buttonGroup_2"/>
-  <buttongroup name="buttonGroup_3"/>
   <buttongroup name="buttonGroup">
    <property name="exclusive">
     <bool>true</bool>
    </property>
   </buttongroup>
+  <buttongroup name="buttonGroup_3"/>
  </buttongroups>
 </ui>

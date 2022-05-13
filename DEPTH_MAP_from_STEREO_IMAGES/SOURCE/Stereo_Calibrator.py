@@ -172,7 +172,7 @@ class Stereo_Calibrator:
         os.makedirs(f"./OUTPUTS/CALIBRATION/COMMON/Calibrated_Parameters/", exist_ok=True)
         os.makedirs(f"./OUTPUTS/CALIBRATION/COMMON/Epilines_Chess_Samples/", exist_ok=True)
         os.makedirs(f"./OUTPUTS/CALIBRATION/COMMON/Disparities_Chess_Samples/", exist_ok=True)
-        os.makedirs(f"./OUTPUTS/CALIBRATION/COMMON/Life_Test/", exist_ok=True)
+        os.makedirs(f"./OUTPUTS/CALIBRATION/COMMON/Live_Test/", exist_ok=True)
         return 0
 
 
@@ -780,7 +780,7 @@ class Stereo_Calibrator:
 
 
     def do_Test(self, use_taken_photos_test):
-        logging.info(f"\n\n10. Taking photos for life test...#############")
+        logging.info(f"\n\n10. Taking photos for live test...#############")
         # NOW WE WILL RECORD A TEST FILM TO CHECK THE CORRECTNESS OF THE MAPS
 
         def normalize_disparity_map(disparity):
@@ -813,18 +813,18 @@ class Stereo_Calibrator:
                         continue
                     _, img_R = self.vidStreamR.retrieve()
                     _, img_L = self.vidStreamL.retrieve()
-                cv2.imwrite(f"./OUTPUTS/CALIBRATION/COMMON/Life_Test/Life_L_{j}.png", img_L)
-                cv2.imwrite(f"./OUTPUTS/CALIBRATION/COMMON/Life_Test/Life_R_{j}.png", img_R)
+                cv2.imwrite(f"./OUTPUTS/CALIBRATION/COMMON/Live_Test/Live_L_{j}.png", img_L)
+                cv2.imwrite(f"./OUTPUTS/CALIBRATION/COMMON/Live_Test/Live_R_{j}.png", img_R)
 
             else:
-                img_L = cv2.imread(f"./OUTPUTS/CALIBRATION/COMMON/Life_Test/Life_L_{j}.png")
-                img_R = cv2.imread(f"./OUTPUTS/CALIBRATION/COMMON/Life_Test/Life_R_{j}.png")
+                img_L = cv2.imread(f"./OUTPUTS/CALIBRATION/COMMON/Live_Test/Live_L_{j}.png")
+                img_R = cv2.imread(f"./OUTPUTS/CALIBRATION/COMMON/Live_Test/Live_R_{j}.png")
 
             # RECTIFY THE IMAGE
             rect_img_L = cv2.remap(img_L, self.mapLx, self.mapLy, cv2.INTER_LANCZOS4, cv2.BORDER_CONSTANT)
             rect_img_R = cv2.remap(img_R, self.mapRx, self.mapRy, cv2.INTER_LANCZOS4, cv2.BORDER_CONSTANT)
             result = np.concatenate((rect_img_L,rect_img_R), axis=1)
-            cv2.imwrite(f"./OUTPUTS/CALIBRATION/COMMON/Life_Test/Life_{j}_color.png", result)
+            cv2.imwrite(f"./OUTPUTS/CALIBRATION/COMMON/Live_Test/Live_{j}_color.png", result)
 
             # GRAYSCALE THE IMAGES
             if not self.is_realsense:
@@ -849,8 +849,8 @@ class Stereo_Calibrator:
             total_unfiltered = np.concatenate((normalize_disparity_map(disparity_L), normalize_disparity_map(disparity_R)), axis=1)
             total_filtered = np.concatenate( (normalize_disparity_map(filtered_disparity), np.zeros(filtered_disparity.shape)), axis=1 )
             joint_images = np.concatenate((total_unfiltered, total_filtered), axis=0)
-            cv2.imwrite(f"./OUTPUTS/CALIBRATION/COMMON/Life_Test/Life_{j}.png", joint_images)
-            self.mainThreadPlotter.emit(result, 2000, f'Life Test {j}')
+            cv2.imwrite(f"./OUTPUTS/CALIBRATION/COMMON/Live_Test/Live_{j}.png", joint_images)
+            self.mainThreadPlotter.emit(result, 2000, f'Live Test {j}')
 
             x, y, w, h = self.disp_roi
             filtered_disparity = filtered_disparity[ y:y+h, x:x+w]
@@ -860,7 +860,7 @@ class Stereo_Calibrator:
             image_3D = np.where(image_3D>9000, 0, image_3D)
             if self.is_realsense and not use_taken_photos_test:
                 rect_img_L = np.stack((rect_img_L, rect_img_L, rect_img_L), axis=-1)
-            self._plot_disparity_and_3D(f"./OUTPUTS/CALIBRATION/COMMON/Life_Test/Life_point_cloud_{j}.png", filtered_disparity, rect_img_L, image_3D)
+            self._plot_disparity_and_3D(f"./OUTPUTS/CALIBRATION/COMMON/Live_Test/Live_point_cloud_{j}.png", filtered_disparity, rect_img_L, image_3D)
         if self.is_realsense and not use_taken_photos_test:
             pipeline.stop()
 

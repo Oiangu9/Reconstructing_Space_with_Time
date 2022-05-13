@@ -81,7 +81,7 @@ except OSError as error:
     pass
 
 try:
-    os.mkdir(f"../COMMON/Life_Test/")
+    os.mkdir(f"../COMMON/Live_Test/")
 except OSError as error:
     pass
 
@@ -499,7 +499,7 @@ def normalize_disparity_map(disparity):
                                   beta=0, norm_type=cv2.NORM_MINMAX)
     return np.uint8(disparity)
 
-input("\n\nPress ENTER to take the Life Test photos:")
+input("\n\nPress ENTER to take the Live Test photos:")
 num_photos=15
 for j in range(num_photos):
     print(f"\n\nTAKING PHOTOS {j}/{num_photos} ########################")
@@ -517,7 +517,7 @@ for j in range(num_photos):
     rect_img_L = cv2.remap(img_L, mapLx, mapLy, cv2.INTER_LANCZOS4, cv2.BORDER_CONSTANT)
     rect_img_R = cv2.remap(img_R, mapRx, mapRy, cv2.INTER_LANCZOS4, cv2.BORDER_CONSTANT)
     result = np.concatenate((rect_img_L,rect_img_R), axis=1)
-    cv2.imwrite(f"../COMMON/Life_Test/Life_{j}_color.png", result)
+    cv2.imwrite(f"../COMMON/Live_Test/Live_{j}_color.png", result)
 
     # GRAYSCALE THE IMAGES
     grayL = cv2.cvtColor(rect_img_L, cv2.COLOR_BGR2GRAY)
@@ -534,8 +534,8 @@ for j in range(num_photos):
     total_unfiltered = np.concatenate((normalize_disparity_map(disparity_L), normalize_disparity_map(disparity_R)), axis=1)
     total_filtered = np.concatenate( (normalize_disparity_map(filtered_disparity), np.zeros(filtered_disparity.shape)), axis=1 )
     joint_images = np.concatenate((total_unfiltered, total_filtered), axis=0)
-    cv2.imwrite(f"../COMMON/Life_Test/Life_{j}.png", joint_images)
-    cv2.imshow(f'Life Test {j}', result)
+    cv2.imwrite(f"../COMMON/Live_Test/Live_{j}.png", joint_images)
+    cv2.imshow(f'Live Test {j}', result)
     ok = cv2.waitKey(2000) #########
     cv2.destroyAllWindows()
 

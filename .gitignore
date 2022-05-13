@@ -4,6 +4,9 @@
 *.npy
 *.npz
 
+# Jupyter notebook checkpoints
+.ipynb_checkpoints
+
 #pycache
 __pycache__
 

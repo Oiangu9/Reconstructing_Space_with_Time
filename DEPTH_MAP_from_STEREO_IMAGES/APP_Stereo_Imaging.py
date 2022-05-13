@@ -8,7 +8,7 @@ import numpy as np
 import cv2
 import logging
 import glob
-import matplotlib as plt
+import matplotlib.pyplot as plt
 
 try:
     import pyrealsense2 as rs
@@ -64,7 +64,7 @@ class Worker(QtCore.QThread):
 class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
     # Create a progress bar updater signal
     barUpdate_Calibrate = QtCore.Signal(int)
-    barUpdate_Life = QtCore.Signal(int)
+    barUpdate_Live = QtCore.Signal(int)
 
     # Create the cv2 plotter signal given : This is necessary to do it because gui stuff (like the
     # cv2 calls to qt) cnanot be handled from secondary threads!!! In a blocking non-threaded
@@ -82,7 +82,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
         # and connect it to the progress bars # asi ahora si se llama self.barUpdate_Calibrate.emit(10) ba yasta en thread save mode
         self.barUpdate_Calibrate.connect(self.progressBar_Calibrate.setValue)
-        self.barUpdate_Life.connect(self.progressBar_Life.setValue)
+        self.barUpdate_Live.connect(self.progressBar_Live.setValue)
 
         # connect the signal to the plotting cv2 function
         self.plotter_cv2.connect(self.show_cv2_image, type=QtCore.Qt.BlockingQueuedConnection)
@@ -112,7 +112,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
         # We connect the events with their actions
         self.start_calibration.clicked.connect(self.executeCalibration)
-        self.start_take.clicked.connect(self.executeLifeTake)
+        self.start_take.clicked.connect(self.executeLiveTake)
         self.run_echo_depth.clicked.connect(self.executeEchoDepthTake)
         self.run_selection_echo_depth.clicked.connect(self.selectEchoDepth)
 
@@ -147,8 +147,8 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.calibrator_worker = Worker( self._executeCalibration_Pipeline, ())
         self.calibrator_worker.finished.connect(lambda: self.setUserInteraction(True))
 
-        self.life_take_worker = Worker( self._executeLifeTake_Pipeline, ())
-        self.life_take_worker.finished.connect(lambda: self.setUserInteraction(True))
+        self.live_take_worker = Worker( self._executeLiveTake_Pipeline, ())
+        self.live_take_worker.finished.connect(lambda: self.setUserInteraction(True))
         #self.calibrator_worker.terminated.connect(lambda: self.setUserInteraction(True))
 
         self.echo_depth_worker = Worker( self._executeEchoDepthTake_Pipeline, ())
@@ -304,7 +304,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         logging.info("\nCALIBRATION FINISHED!!!\n")
         # reset the button
 
-    def executeLifeTake(self):
+    def executeLiveTake(self):
         self.setUserInteraction(False)
 
         user_defined_parameters={}
@@ -313,8 +313,8 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         user_defined_parameters["stereo_rectify_param_path"] = self.stereo_rectify_param_path.text()
         user_defined_parameters["frame_number"] = int(self.frame_number.text())
         user_defined_parameters["time_between_frames"] = float(self.time_between_frames.text())
-        user_defined_parameters["show_life_frames"] = self.show_life_frames.isChecked()
-        user_defined_parameters["use_taken_photos_life"] = self.use_taken_photos_life.isChecked()
+        user_defined_parameters["show_live_frames"] = self.show_live_frames.isChecked()
+        user_defined_parameters["use_taken_photos_live"] = self.use_taken_photos_live.isChecked()
         user_defined_parameters["block_size"]= int(self.block_size.text())
         user_defined_parameters["min_disp"]= int(self.min_disp.text())
         user_defined_parameters["num_disp"]= int(self.num_disp.text())
@@ -329,36 +329,36 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         user_defined_parameters["width"] = int(self.width.text())
         user_defined_parameters["height"] = int(self.height.text())
         user_defined_parameters["laser"]=self.laser.isChecked()
-        
-        self.life_take_worker.args=(user_defined_parameters,)
-        self.life_take_worker.start()
+
+        self.live_take_worker.args=(user_defined_parameters,)
+        self.live_take_worker.start()
 
 
-    def _executeLifeTake_Pipeline(self, user_defined_parameters):
+    def _executeLiveTake_Pipeline(self, user_defined_parameters):
         depth_mapper = Depth_Mapper(user_defined_parameters, self.plotter_cv2)
 
         # We execute all the pipeline, notifying the user in between
         os.chdir(user_defined_parameters["working_directory"])
-        self.barUpdate_Life.emit(1)
-        if not self.use_taken_photos_life.isChecked(): # only then it is necesary a camera
+        self.barUpdate_Live.emit(1)
+        if not self.use_taken_photos_live.isChecked(): # only then it is necesary a camera
             ret = depth_mapper.setCameras(int(self.cam_L_idx.value()),
                                                 int(self.cam_R_idx.value())) #%5
             if (ret==1):
                 logging.error("\nTry readjusting cameras and Start Calibration Again!")
-                self.barUpdate_Life.emit(0)
+                self.barUpdate_Live.emit(0)
                 return 1
 
-        self.barUpdate_Life.emit(10)
+        self.barUpdate_Live.emit(10)
 
-        ret = depth_mapper.clean_directories_build_new(self.remove_old_data_life.isChecked()) #%6
+        ret = depth_mapper.clean_directories_build_new(self.remove_old_data_live.isChecked()) #%6
         if ret==1:
             logging.error("\n[ERROR] If old data is to use, there should exist an ./OUTPUT directory in working directory!")
-            self.barUpdate_Life.emit(0)
+            self.barUpdate_Live.emit(0)
             return 1
-        self.barUpdate_Life.emit(15)
+        self.barUpdate_Live.emit(15)
 
         depth_mapper.compute_Disparity_Maps()
-        self.barUpdate_Life.emit(100)
+        self.barUpdate_Live.emit(100)
 
 
     def executeEchoDepthTake(self):
@@ -373,14 +373,14 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         user_defined_parameters["time_between_shots"]=float(self.time_between_shots.text())
         user_defined_parameters["echo_depth_output_path"]=self.echo_depth_output_path.text()
         user_defined_parameters["frequency"]=float(self.frequency.text())
-        user_defined_parameters["pulse_duration"]=float(self.pulse_duration.text())
+        user_defined_parameters["pulse_duration"]=float(eval(self.pulse_duration.text()))
         user_defined_parameters["broadcast_sample_rate"]=int(self.broadcast_sample_rate.text())
-        user_defined_parameters["envelope_std"]=float(self.envelope_std.text())
+        user_defined_parameters["envelope_std_ratio"]=float(self.envelope_std_ratio.text())
         user_defined_parameters["gaussian_envelope"]=self.gaussian_envelope.isChecked()
         user_defined_parameters["recording_sample_rate"]=int(self.recording_sample_rate.text())
-        user_defined_parameters["recording_duration"]=float(self.recording_duration.text())
+        user_defined_parameters["echo_duration"]=float(eval(self.echo_duration.text()))
         user_defined_parameters["use_average_image"]=self.use_average_image.isChecked()
-        user_defined_parameters["delay_broadcast_recording"]=float(self.delay_broadcast_recording.text())
+
 
         user_defined_parameters["block_size"]= int(self.block_size.text())
         user_defined_parameters["min_disp"]= int(self.min_disp.text())
@@ -392,6 +392,17 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         user_defined_parameters["lmbda"]= int(self.lmbda.text())
         user_defined_parameters["sigma"]= float(self.sigma.text())
         user_defined_parameters["visual_multiplier"]= int(self.visual_multiplier.text())
+        user_defined_parameters["is_realsense"] = self.use_realsense_cameras.isChecked()
+        user_defined_parameters["width"] = int(self.width.text())
+        user_defined_parameters["height"] = int(self.height.text())
+        user_defined_parameters["laser"]=self.laser.isChecked()
+
+        user_defined_parameters["lower_freq_1"] = int(self.lower_freq_1.text())
+        user_defined_parameters["upper_freq_1"] = int(self.upper_freq_1.text())
+        user_defined_parameters["lower_freq_2"] = int(self.lower_freq_2.text())
+        user_defined_parameters["upper_freq_2"] = int(self.upper_freq_2.text())
+        user_defined_parameters["filter_freqs"] = self.filter_freqs.isChecked()
+        user_defined_parameters["show_live_frames"] = self.show_live_frames_echo.isChecked()
 
         self.echo_depth_worker.args=(user_defined_parameters,)
         self.echo_depth_worker.start()
@@ -402,30 +413,65 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
         # We execute all the pipeline, notifying the user in between
         os.chdir(user_defined_parameters["working_directory"])
-        self.barUpdate_Life.emit(1)
+        self.barUpdate_Live.emit(1)
         ret = depth_mapper.setCameras(int(self.cam_L_idx.value()),
                                             int(self.cam_R_idx.value())) #%5
         if (ret==1):
             logging.error("\nTry readjusting cameras and Start Calibration Again!")
-            self.barUpdate_Life.emit(0)
+            self.barUpdate_Live.emit(0)
             #return 1
 
-        self.barUpdate_Life.emit(10)
+        self.barUpdate_Live.emit(10)
 
         ret = depth_mapper.clean_directories_build_new(self.erase_old_data_echo_depth.isChecked())
 
         if ret==1:
             logging.error("\n[ERROR] If old data is to use, there should exist an ./OUTPUT directory in working directory!")
-            self.barUpdate_Life.emit(0)
+            self.barUpdate_Live.emit(0)
             return 1
-        self.barUpdate_Life.emit(15)
+        self.barUpdate_Live.emit(15)
 
         depth_mapper.take_samples()
-        self.barUpdate_Life.emit(100)
+        self.barUpdate_Live.emit(100)
 
     def selectEchoDepth(self):
-        self.depthMaps=sorted(glob.glob(f"{self.echo_depth_output_path}/SOUND_ECHO_and_DEPTH/DEPTH_MAPS/FILTERED_DEPTH_MAPS/*.png"))
-        self.audios=sorted(glob.glob(f"{self.echo_depth_output_path}/SOUND_ECHO_and_DEPTH/SOUND_RECORDINGS/*.wav"))
+        depthMaps=sorted(glob.glob(f"{self.echo_depth_output_path.text()}/SOUND_ECHO_and_DEPTH/DEPTH_MAPS/FILTERED_DEPTH_MAPS/*.png"))
+        audios=sorted(glob.glob(f"{self.echo_depth_output_path.text()}/SOUND_ECHO_and_DEPTH/SOUND_RECORDINGS/NPY/*.npy"))
+        wavs=sorted(glob.glob(f"{self.echo_depth_output_path.text()}/SOUND_ECHO_and_DEPTH/SOUND_RECORDINGS/WAV/*.wav"))
+        imgs = sorted(glob.glob(f"{self.echo_depth_output_path.text()}/SOUND_ECHO_and_DEPTH/DEPTH_MAPS/USED_IMAGES/*.png"))
+        fig, axs = plt.subplots(1,3,figsize=(15, 5))
+        tempo=f"{self.echo_depth_output_path.text()}/temp.png"
+        w = int(self.width.text())
+        for depth_path, audio_path, wav_path, im_path in zip(depthMaps, audios, wavs, imgs):
+            if depth_path.split("/")[-1].split("_")[-1].split(".")[0]!=audio_path.split("/")[-1].split("_")[-1].split(".")[0] or depth_path.split("/")[-1].split("_")[-1].split(".")[0]!=wav_path.split("/")[-1].split("_")[-1].split(".")[0] or depth_path.split("/")[-1].split("_")[-1].split(".")[0]!=im_path.split("/")[-1].split("_")[-1].split(".")[0]:
+                logging.info("DATA NAMES ARE NOT AALIGNED!!!")
+                return 1
+            axs[1].set_title("Recorded and post-processed audio")
+            axs[0].set_title("Computed depth map")
+            axs[2].set_title("Taken Left Image")
+            axs[1].set_xlabel("Time samples")
+            axs[1].grid()
+            axs[0].imshow(cv2.imread(depth_path), cmap='gray')
+            audio = np.load(audio_path)
+            axs[1].plot(audio)
+            axs[2].imshow(cv2.imread(im_path)[:, :w])
+            plt.savefig(tempo)
+            axs[0].clear()
+            axs[1].clear()
+            cv2.imshow("Press Enter if you want to keep it, else will be erased!", cv2.imread(tempo))
+            decission = cv2.waitKey(0)
+            cv2.destroyAllWindows()
+            # enter is yes, anything else is no
+            if not (decission == ord('\n') or decission == ord('\r')):
+                # then erase sample
+                os.remove(depth_path)
+                os.remove(audio_path)
+                os.remove(wav_path)
+                os.remove(im_path)
+        os.remove(tempo)
+
+
+
 
 
 if __name__ == "__main__":

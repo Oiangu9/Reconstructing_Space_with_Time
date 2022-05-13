@@ -4,8 +4,8 @@ from matplotlib import pyplot as plt
 
 
 
-img_L = cv2.imread('../CAM_LEFT/Life_Images/left_img.png', cv2.IMREAD_GRAYSCALE)  
-img_R = cv2.imread('../CAM_RIGHT/Life_Images/right_img.png', cv2.IMREAD_GRAYSCALE)
+img_L = cv2.imread('../CAM_LEFT/Live_Images/left_img.png', cv2.IMREAD_GRAYSCALE)  
+img_R = cv2.imread('../CAM_RIGHT/Live_Images/right_img.png', cv2.IMREAD_GRAYSCALE)
 
 # LOOK FOR KEYPOINTS ####################################
 sift = cv2.SIFT_create() # The keypoint detector algorithm
