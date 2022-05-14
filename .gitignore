@@ -12,3 +12,14 @@ __pycache__
 
 # Outputs
 OUTPUTS/*
+
+# Datasets
+*.npy
+*.png
+*.wav
+*.h5
+
+# Others
+.directory
+
+
