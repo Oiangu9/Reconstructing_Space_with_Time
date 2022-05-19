@@ -45,6 +45,7 @@ write('output.wav', fs, myrecording)  # Save as WAV file
 
 
 
+
 print("Now play!")
 # Ensure that highest value is in 16-bit range
 myrecording = myrecording * (2**15 - 1) / np.max(np.abs(myrecording))

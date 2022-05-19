@@ -15,3 +15,11 @@ sys
 shutil
 
 PyQt5
+
+sounddevice
+
+simpleaudio
+
+scipy
+
+realsense (optional)

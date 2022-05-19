@@ -5,7 +5,6 @@ import matplotlib.pyplot as plt
 import logging
 import shutil
 from time import time, sleep
-import simpleaudio as sa
 from scipy.interpolate import griddata
 try:
     import pyrealsense2 as rs
@@ -193,7 +192,6 @@ class Depth_Mapper:
         for j in range(self.num_frames):
 
             # Start playback
-            play_obj = sa.play_buffer(audio, 1, 2, fs)
             logging.info(f"\n\nTAKING PHOTOS {j+1}/{self.num_frames} ########################")
             begin_t = time()
             # instead of using .read() to get an image we decompose it into .grab and then .retrieve

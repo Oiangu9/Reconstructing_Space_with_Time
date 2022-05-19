@@ -1,25 +1,24 @@
 # images
-*.png
+**/*.png
 # parameters
-*.npy
-*.npz
+**/*.npy
+**/*.npz
 
 # Jupyter notebook checkpoints
-.ipynb_checkpoints
+**/.ipynb_checkpoints
 
 #pycache
-__pycache__
+**/__pycache__
 
 # Outputs
 OUTPUTS/*
 
 # Datasets
-*.npy
-*.png
-*.wav
-*.h5
+**/*.npy
+**/*.wav
+**/*.h5
+**/*.mp3
+**/*.pt
 
 # Others
-.directory
-
-
+**/.directory

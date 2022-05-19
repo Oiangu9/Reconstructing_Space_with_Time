@@ -1199,7 +1199,7 @@ to take:</string>
           </rect>
          </property>
          <property name="text">
-          <string>10</string>
+          <string>1000</string>
          </property>
         </widget>
         <widget class="QRadioButton" name="erase_old_data_echo_depth">
@@ -1225,7 +1225,7 @@ to take:</string>
           </rect>
          </property>
          <property name="text">
-          <string>1</string>
+          <string>0.5</string>
          </property>
         </widget>
         <widget class="QLabel" name="label_46">
@@ -1281,7 +1281,7 @@ in directory To Erase</string>
           <string>Show taken farmes live</string>
          </property>
          <property name="checked">
-          <bool>true</bool>
+          <bool>false</bool>
          </property>
          <property name="autoExclusive">
           <bool>false</bool>
@@ -1396,7 +1396,7 @@ Total time is pulse dur.+this:</string>
           </rect>
          </property>
          <property name="text">
-          <string>5000</string>
+          <string>4500</string>
          </property>
         </widget>
         <widget class="QLabel" name="label_51">
@@ -1422,7 +1422,7 @@ Total time is pulse dur.+this:</string>
           </rect>
          </property>
          <property name="text">
-          <string>15000</string>
+          <string>55000</string>
          </property>
         </widget>
         <widget class="QLabel" name="label_52">
@@ -1583,7 +1583,7 @@ Calibrated Parameters:</string>
           <string>&amp;Use average image of each pulse</string>
          </property>
          <property name="checked">
-          <bool>true</bool>
+          <bool>false</bool>
          </property>
         </widget>
         <widget class="QRadioButton" name="use_middle_image">
@@ -1597,6 +1597,9 @@ Calibrated Parameters:</string>
          </property>
          <property name="text">
           <string>Use image in the middle of each pulse</string>
+         </property>
+         <property name="checked">
+          <bool>true</bool>
          </property>
         </widget>
        </widget>
@@ -1687,7 +1690,7 @@ Calibrated Parameters:</string>
           </rect>
          </property>
          <property name="text">
-          <string>8000</string>
+          <string>5000</string>
          </property>
         </widget>
         <widget class="QLineEdit" name="pulse_duration">
@@ -1782,11 +1785,11 @@ Calibrated Parameters:</string>
  <connections/>
  <buttongroups>
   <buttongroup name="buttonGroup_2"/>
+  <buttongroup name="buttonGroup_3"/>
   <buttongroup name="buttonGroup">
    <property name="exclusive">
     <bool>true</bool>
    </property>
   </buttongroup>
-  <buttongroup name="buttonGroup_3"/>
  </buttongroups>
 </ui>

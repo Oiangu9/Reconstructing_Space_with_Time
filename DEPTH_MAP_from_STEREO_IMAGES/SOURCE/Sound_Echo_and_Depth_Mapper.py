@@ -5,7 +5,6 @@ import matplotlib.pyplot as plt
 import logging
 import shutil
 from time import time, sleep
-import simpleaudio as sa
 from scipy.interpolate import griddata
 import sounddevice as sd
 from scipy.io.wavfile import write
@@ -60,7 +59,7 @@ class Sound_Echo_and_Depth_Mapper:
 
         self.is_realsense = user_defined_parameters["is_realsense"]
         self.laser= 1 if user_defined_parameters["laser"] else 0
-        print(self.laser)
+
         self.lower_freq_1 = user_defined_parameters["lower_freq_1"]
         self.upper_freq_1 = user_defined_parameters["upper_freq_1"]
 
@@ -137,7 +136,7 @@ class Sound_Echo_and_Depth_Mapper:
             shutil.rmtree(f"{self.output_path}/SOUND_ECHO_and_DEPTH/", ignore_errors=True)
 
         os.makedirs(f"{self.output_path}/SOUND_ECHO_and_DEPTH/DEPTH_MAPS/USED_IMAGES", exist_ok=True)
-        os.makedirs(f"{self.output_path}/SOUND_ECHO_and_DEPTH/DEPTH_MAPS/FILTERED_DEPTH_MAPS", exist_ok=True)
+        os.makedirs(f"{self.output_path}/SOUND_ECHO_and_DEPTH/DEPTH_MAPS/FILTERED_DEPTH_MAPS/NPY", exist_ok=True)
         os.makedirs(f"{self.output_path}/SOUND_ECHO_and_DEPTH/SOUND_RECORDINGS/WAV", exist_ok=True)
         os.makedirs(f"{self.output_path}/SOUND_ECHO_and_DEPTH/SOUND_RECORDINGS/NPY", exist_ok=True)
         return 0
@@ -282,7 +281,7 @@ class Sound_Echo_and_Depth_Mapper:
                 # frecs = np.concatenate((np.linspace(0, 1.0/(2.0*T), N//2), np.linspace(-1.0/(2.0*T), 0, N//2))) # before the shifting for plotting
                 frecs = np.linspace(-1.0/(2.0*T), 1.0/(2.0*T), N) # this is after applying the shift for ploting
                 samplesFourierCoefs = fftshift(samplesFourierCoefs)
-                print(self.lower_freq_1, self.upper_freq_1, self.lower_freq_2, self.upper_freq_2)
+
                 # apply filtering
                 samplesFourierCoefs[ (np.abs(frecs)<=self.upper_freq_1) & (np.abs(frecs)>=self.lower_freq_1) ]=0
                 samplesFourierCoefs[ (np.abs(frecs)<=self.upper_freq_2) & (np.abs(frecs)>=self.lower_freq_2) ]=0
@@ -318,8 +317,7 @@ class Sound_Echo_and_Depth_Mapper:
             # COMPUTE DISPARITIES
             disparity_L = self.stereo_left_matcher.compute(grayL, grayR).astype(np.float32)/16
             disparity_R = self.stereo_right_matcher.compute(grayR, grayL).astype(np.float32)/16
-            #disparity_L = np.int16(disparity_L)
-            #disparity_R = np.int16(disparity_R)
+
             filtered_disparity = self.wls_filter.filter(disparity_L, grayL, None, disparity_R).astype(np.float32)/16  # important to put "imgL" here!!! Maybe can use the colored image here!
 
             # We invert the rectification to obtain back an image with the original sizes
@@ -328,6 +326,7 @@ class Sound_Echo_and_Depth_Mapper:
             filtered_disparity = filtered_disparity[ y:y+h, x:x+w]
             rect_img_L = rect_img_L[ y:y+h, x:x+w]
 
+            np.save(f"{self.output_path}/SOUND_ECHO_and_DEPTH/DEPTH_MAPS/FILTERED_DEPTH_MAPS/NPY/DepthMap_{date}.npy",  filtered_disparity )
             result = normalize_disparity_map(filtered_disparity)
             cv2.imwrite(f"{self.output_path}/SOUND_ECHO_and_DEPTH/DEPTH_MAPS/FILTERED_DEPTH_MAPS/DepthMap_{date}.png", result)
 
