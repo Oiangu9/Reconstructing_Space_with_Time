@@ -5,3 +5,6 @@ For this, a graphical user interface is created to calibrate a stereo pair and g
 
 The full report of the project can be found at:
 
+https://github.com/Oiangu9/Reconstructing_Space_with_Time/blob/main/REPORT_Project.pdf
+
+
